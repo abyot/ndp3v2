@@ -1432,6 +1432,8 @@ $.extend( dhis2.period.FinancialBaseGenerator.prototype, {
       period['_startDate'] = this.calendar.newDate( startDate );
       period['_endDate'] = this.calendar.newDate( endDate );
 
+      period['name'] = startDate.year() + '/' + endDate.formatDate( "yy" );
+
       periods.push( period );
       startDate.add( 1, 'y' );
     }
