@@ -201,7 +201,7 @@ ndpFramework.controller('GoalController',
                             $scope.selectedOrgUnit = $scope.orgUnits[0] ? $scope.orgUnits[0] : null;
                             $scope.model.metaDataCached = true;
                             $scope.populateMenu();
-                            $scope.model.performanceHeaders = CommonUtils.getPerformanceOverviewHeaders();
+                            $scope.model.performanceOverviewLegends = CommonUtils.getPerformanceOverviewHeaders();
                             /*$scope.model.dashboardName = 'Goals';
                             DashboardService.getByName( $scope.model.dashboardName ).then(function( result ){
                                 $scope.model.dashboardItems = result.dashboardItems;

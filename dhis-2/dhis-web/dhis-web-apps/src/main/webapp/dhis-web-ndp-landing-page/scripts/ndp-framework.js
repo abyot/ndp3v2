@@ -142,11 +142,11 @@ dhis2.ndp.downloadDataElements = function( dataElementType )
     return def.promise();
 };
 
-dhis2.ndp.downloadGroupSets = function( groupSetType )
+dhis2.ndp.downloadGroupSets = function( code, groupSetType )
 {
     var def = $.Deferred();
     dhis2.ndp.store.open().then(function(){
-        getMetaDataElementGroupSetsByType( groupSetType ).then(function( metaDegs ){
+        getMetaDataElementGroupSetsByType( code, groupSetType ).then(function( metaDegs ){
             filterMissingDataElementGroupSets(metaDegs).then(function( missingDegs ){
                 getDataElementGroupSets(missingDegs).then(function( degs ){
                     getDataElementGroups(degs).then(function( des ){
@@ -357,8 +357,18 @@ function getDataElementGroups( ids ){
     return dhis2.metadata.getBatches( ids, dhis2.ndp.batchSize, 'dataElementGroups', 'dataElementGroups', dhis2.ndp.apiUrl + '/dataElementGroups.json', 'paging=false&fields=id,displayName,code,description,dataElements[id],attributeValues[value,attribute[id,name,valueType,code]]', 'idb', dhis2.ndp.store);
 }
 
-function getMetaDataElementGroupSetsByType( type ){
-    return dhis2.metadata.getMetaObjectIds('dataElementGroupSets', dhis2.ndp.apiUrl + '/dataElementGroupSets.json', 'paging=false&fields=id,version&filter=attributeValues.value:eq:' + type );
+function getMetaDataElementGroupSetsByType( type, code ){
+    var filter = '';
+
+    if ( type !== '' ){
+        filter += '&filter=attributeValues.value:eq:' + type;
+    }
+
+    if ( code !== '' ){
+        filter += "&code:$ilike:" + code;
+    }
+
+    return dhis2.metadata.getMetaObjectIds('dataElementGroupSets', dhis2.ndp.apiUrl + '/dataElementGroupSets.json', 'paging=false&fields=id,version' + filter );
 }
 
 function getMetaDataElementGroupSets(){

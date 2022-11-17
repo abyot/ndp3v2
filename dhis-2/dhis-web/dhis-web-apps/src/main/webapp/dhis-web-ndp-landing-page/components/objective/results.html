@@ -35,9 +35,9 @@
                     </tr>
                     <tr>
                         <th class="sticky">{{model.selectedMenu.ndp}} {{'objectives'| translate}}</th>
-                        <th>{{'kras'| translate}}</th>
+                        <th class="sticky">{{'kras'| translate}}</th>
                         <th>{{'indicators'| translate}}</th>
-                        <th class="center" ng-repeat="header in model.dataHeaders" ng-if="header.hasResultData">
+                        <th class="sticky center" ng-repeat="header in model.dataHeaders" ng-if="header.hasResultData">
                             {{model.metaData.items[header.dimensionId].name}}
                         </th>
                     </tr>

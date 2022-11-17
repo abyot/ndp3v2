@@ -645,9 +645,9 @@ var d2Services = angular.module('d2Services', ['ngResource'])
 
             var nd = { id: 'X', name: $translate.instant('no_data'), style: {"background-color": '#aaa !important', "color": '#000'}};
 
-            var al = { id: 'All', name: $translate.instant('weighted_score'), style: {"background-color": '#fff !important', "color": '#000'}};
+            //var al = { id: 'All', name: $translate.instant('weighted_score'), style: {"background-color": '#fff !important', "color": '#000'}};
 
-            return [ac, ma, na, nd, al];
+            return [ac, ma, na, nd];
         }
     };
 })
