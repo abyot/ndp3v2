@@ -47,8 +47,10 @@ html, body {
         display: block;
     }
     body, html {
-        width: 100% !important;
-        height: auto !important;
+        /*width: 100% !important;
+        height: auto !important;*/
+        width: 210mm;
+        height: 297mm;
         overflow-y: hidden; /* Hide vertical scrollbar */
         overflow-x: hidden; /* Hide horizontal scrollbar */
     }
@@ -80,19 +82,38 @@ html, body {
 
     .table-scroll {
         height: 100% !important;
+        overflow: hidden !important;
+        width: 100% !important;
     }
 
     .table-scroll table {
         padding: 20px;
-        height: 100% !important;
         width: 100% !important;
         border-collapse: collapse !important;
-        border-spacing: 0 !important;
+    }
+    
+    .table-scroll tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
     }
 
-    .result-table th {
-        border: 1px solid #000 !important;
+    .table-scroll th {
+        background: #d0d0d2 !important;
+        color: #000 !important;
+        position: static !important;        
     }
+    
+    .table-scroll th, 
+    .table-scroll td {
+        border: 1px solid  !important;
+        border-collapse: collapse !important;
+    }
+    
+    .table-scroll th,
+    .table-scroll td {
+        vertical-align: middle !important;
+    }
+
 }
 
 .category-menu {
@@ -598,11 +619,8 @@ ul.tree ul li:last-child:before {
 }
 
 .carousel-inner > .item > img {
-    height: auto;
-    display: table;
-    margin: 0 auto;
-    padding-right: 0 !important;
-    padding-left: 0 !important;
+    padding: 0;
+    display: flex;
 }
 
 .carousel-control {
@@ -614,17 +632,13 @@ ul.tree ul li:last-child:before {
     cursor: pointer;
 }
 
-.sticky-table {
-    height: 60vh;
-}
-
 .table-scroll {
     position: relative;
     width: 100%;
     z-index: 1;
     margin: auto;
     overflow: scroll;
-    height: 80vh;
+    height: 75vh;
 }
 
 .table-scroll table {
@@ -635,19 +649,9 @@ ul.tree ul li:last-child:before {
     border-spacing: 0;
 }
 
-.table-scroll table,
-.table-scroll th,
-.table-scroll td {
-    /*border: 1px solid #729fcf !important;*/
-}
 
 .table-wrap {
     position: relative;
-}
-
-.table-scroll th,
-.table-scroll td {
-    vertical-align: top;
 }
 
 .table-scroll thead th {
@@ -656,23 +660,13 @@ ul.tree ul li:last-child:before {
     position: -webkit-sticky;
     position: sticky;
     top: 0;
-}
-
-th.sticky {
-    position: -webkit-sticky;
-    position: sticky;
-    left: 0;
-    z-index: 2;
-    background: #ccc;
-}
-
-thead th.sticky {
-    z-index: 5;
+    z-index: 9999;
 }
 
 .table-scroll thead tr:nth-child(2) th {
     top: 30px;
 }
+
 .selected-ndp-menu {
     color: red !important;
 }
