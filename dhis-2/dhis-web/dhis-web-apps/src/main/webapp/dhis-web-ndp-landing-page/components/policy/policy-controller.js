@@ -2,7 +2,7 @@
 
 /* global ndpFramework, parseFloat */
 
-ndpFramework.controller('ProjectController',
+ndpFramework.controller('PolicyController',
     function($scope,
         $translate,
         $modal,
@@ -41,9 +41,9 @@ ndpFramework.controller('ProjectController',
     };
 
     $scope.model.horizontalMenus = [
-        {id: 'synthesis', title: 'project_synthesis', order: 1, view: 'components/project/synthesis.html', active: true, class: 'main-horizontal-menu'},
-        {id: 'time_performance', title: 'time_performance', order: 2, view: 'components/project/time-performance.html', class: 'main-horizontal-menu'},
-        {id: 'cost_performance', title: 'cost_performance', order: 3, view: 'components/project/cost-performance.html', class: 'main-horizontal-menu'}
+        {id: 'synthesis', title: 'project_synthesis', order: 1, view: 'components/policy/synthesis.html', active: true, class: 'main-horizontal-menu'},
+        {id: 'time_performance', title: 'time_performance', order: 2, view: 'components/policy/time-performance.html', class: 'main-horizontal-menu'},
+        {id: 'cost_performance', title: 'cost_performance', order: 3, view: 'components/policy/cost-performance.html', class: 'main-horizontal-menu'}
     ];
 
     $scope.model.performanceHeaders = [
@@ -61,6 +61,7 @@ ndpFramework.controller('ProjectController',
         }
     });
 
+
     MetaDataFactory.getAll('optionSets').then(function(optionSets){
 
         $scope.model.optionSets = optionSets;
@@ -72,7 +73,7 @@ ndpFramework.controller('ProjectController',
         $scope.model.ndp = $filter('getFirst')($scope.model.optionSets, {code: 'ndp'});
 
         MetaDataFactory.getAll('programs').then(function(programs){
-            $scope.model.programs = $filter('filter')(programs, {programType: 'WITH_REGISTRATION', trackingProgramType: 'projectPerformance'}, true);
+            $scope.model.programs = $filter('filter')(programs, {programType: 'WITH_REGISTRATION', trackingProgramType: 'policyAction'}, true);
 
             $scope.model.selectedMenu = SelectedMenuService.getSelectedMenu();
 
