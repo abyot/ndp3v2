@@ -18,17 +18,7 @@
             </span>
         </span>
         <div id="performance" class="table-scroll">
-            <table ng-if="model.showExplanation && model.explanations.length > 0">
-                <tr ng-repeat="explanation in model.explanations">
-                    <td>
-                        [{{$index + 1}}] {{model.dataElementsById[explanation.dataElement].displayName}}
-                    </td>
-                    <td>
-                        {{explanation.comment}}
-                    </td>
-                </tr>
-
-            </table>
+            <div ng-include="'views/explanation-list.html'"></div>
             <div ng-include="'views/performance-table-header.html'"></div>
             <table>
                 <thead>
