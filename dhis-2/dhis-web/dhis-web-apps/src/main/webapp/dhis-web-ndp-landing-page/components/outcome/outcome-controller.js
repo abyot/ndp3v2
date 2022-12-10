@@ -50,7 +50,8 @@ ndpFramework.controller('OutcomeController',
         {id: 'target', title: 'targets', order: 1, view: 'components/outcome/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/outcome/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/outcome/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'completeness', title: 'completeness', order: 4, view: 'components/outcome/completeness.html', class: 'main-horizontal-menu'}
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'components/outcome/cluster-performance.html', class: 'main-horizontal-menu'},
+        {id: 'completeness', title: 'completeness', order: 5, view: 'components/outcome/completeness.html', class: 'main-horizontal-menu'}
     ];
 
     //Get orgunits for the logged in user

@@ -10,7 +10,7 @@ ndpFramework.controller('DataValueExplanationController',
             DHIS2URL,
             item,
             DataValueService,
-            EventService,
+            DocumentService,
             MetaDataFactory){
 
 
@@ -149,7 +149,7 @@ ndpFramework.controller('DataValueExplanationController',
 
                             $scope.documents = {};
                             if ( eventIds.length > 0 ){
-                                EventService.getMultiple( eventIds ).then(function(docs){
+                                DocumentService.getMultiple( eventIds ).then(function(docs){
                                     $scope.documents = docs;
                                 });
                             }

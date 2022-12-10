@@ -903,8 +903,9 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             var cumulativeData = [];
             var costData = [];
             var costEffData = [];
-            var redCells = 0, yellowCells = 0, greenCells = 0, totalRows = 0;
+            var redCells = 0, yellowCells = 0, greenCells = 0, totalRows = 0, dataElementRows = 0;
             var hasPhysicalPerformanceData = false;
+            var dataElementRowIndex = {};
 
             var mergeBtaData = function( _data ){
                 var data = angular.copy( _data );
@@ -1032,6 +1033,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             };
 
             var getTrafficLight = function( actual, target, deId, aoc ) {
+                var style = {};
                 var color = "";
                 var de = dataParams.dataElementsById[deId];
                 var ranges = {};
@@ -1051,28 +1053,12 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 }
 
                 if ( !ranges.green || !ranges.yellowStart || !ranges.yellowEnd || !ranges.red ){
-                    /*ranges = {
-                        green: 15,
-                        greenColor: '#339D73',
-                        yellowStart: 15,
-                        yellowEnd: 30,
-                        yellowColor: '#F4CD4D',
-                        red: 30,
-                        redColor: '#CD615A'
-                    };*/
-                    ranges = {
-                        green: 100,
-                        greenColor: '#339D73',
-                        yellowStart: 75,
-                        yellowEnd: 99,
-                        yellowColor: '#F4CD4D',
-                        red: 74,
-                        redColor: '#CD615A'
-                    };
+                    ranges = CommonUtils.getFixedRanges();
                 }
 
                 if ( !dhis2.validation.isNumber( actual ) || ! dhis2.validation.isNumber( target ) ){
                     color = '#aaa';
+                    style.printStyle = 'grey-background';
                 }
                 else {
                     hasPhysicalPerformanceData = true;
@@ -1089,16 +1075,20 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     var t = CommonUtils.getPercent( actual, target, true, true);
                     if ( t >= ranges.green ){
                         color = ranges.greenColor;
+                        style.printStyle = 'green-background';
                     }
                     else if( t >= ranges.yellowStart && t <= ranges.yellowEnd ){
                         color = ranges.yellowColor;
+                        style.printStyle = 'yellow-background';
                     }
                     else {
                         color = ranges.redColor;
+                        style.printStyle = 'red-background';
                     }
                 }
 
-                return {"background-color": color};
+                style.inlineStyle = {"background-color": color};
+                return style;
             };
 
             var getPerforAndCostData = function(header, dataElement, oc, data, reportParams){
@@ -1310,7 +1300,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 angular.forEach(de.categoryOptionCombos, function(oc){
                                     groupSet.span++;
                                     group.span++;
-
+                                    dataElementRows++;
                                     var name = dataParams.dataElementsById && dataParams.dataElementsById[de.id] ? dataParams.dataElementsById[de.id].displayName : 'not-found';
                                     if( de.categoryOptionCombos.length > 1 ){
                                         name = name + " - " + oc.displayName;
@@ -1356,7 +1346,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                             trafficLight = getTrafficLight(val, targetValue, de.id, dh.dimensionId);
                                         }
 
-                                        physicalPerformanceRow.push({val: val, span: 1, trafficLight: trafficLight, details: de.id, period: period, coc: oc, aoc: dh.dimensionId});
+                                        physicalPerformanceRow.push({val: val, span: 1, trafficLight: trafficLight.inlineStyle ? trafficLight.inlineStyle : '', printStyle:  trafficLight.printStyle ? trafficLight.printStyle : '', details: de.id, period: period, coc: oc, aoc: dh.dimensionId});
 
                                         if ( dh.dimensionId === dataParams.actualDimension.id ){
                                             var ah = angular.copy(dh);
@@ -1545,7 +1535,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                             }
                                             else{
                                                 performanceOverviewRow.push({val: v, pSpan: 1});
-                                                performanceOverviewPercentageRow.push({val: prcnt + '%', pSpan: 1});
+                                                performanceOverviewPercentageRow.push({val: prcnt, hasPercent: true, pSpan: 1});
                                             }
                                         });
                                         parsedPerformanceOverviewRow.push(performanceOverviewRow);
@@ -1556,6 +1546,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
                                     //Performance, Cumulative, Cost and CostEff data
                                     var r = {val: name , span: 1, info: de.id};
+                                    dataElementRowIndex[de.id] = dataElementRows;
                                     performanceRow.push(r);
                                     cumulativeRow.push(r);
                                     costRow.push(r);
@@ -1701,7 +1692,8 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 completenessNum: completenessNum,
                 completenessDen: completenessDen,
                 selectedDataElementGroupSets: dataParams.selectedDataElementGroupSets,
-                performanceOverviewData: performanceOverviewData
+                performanceOverviewData: performanceOverviewData,
+                dataElementRowIndex: dataElementRowIndex
             };
         }
     };
@@ -1721,7 +1713,50 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
     };
 })
 
-.service('EventService', function($http, $q, DHIS2URL, CommonUtils, DateUtils, FileService, OptionSetService) {
+.service('EventService', function($http, $q, orderByFilter, DHIS2URL, CommonUtils, DateUtils, OptionSetService) {
+    return {
+        getByOrgUnitAndProgram: function(orgUnit, ouMode, program, optionSets, dataElementsById){
+            var url = DHIS2URL + '/events.json?' + 'paging=false&orgUnit=' + orgUnit + '&ouMode='+ ouMode + '&program=' + program;
+            var promise = $http.get( url ).then(function(response){
+                var events = response.data && response.data.events ? response.data.events : [];
+                var faqs = [];
+                if( response && response.data && response.data.events ){
+                    angular.forEach(events, function(ev){
+                        if( ev.dataValues ){
+                            var faq = {
+                                eventDate: ev.eventDate,
+                                event: ev.event
+                            };
+                            angular.forEach(ev.dataValues, function(dv){
+                                var de = dataElementsById[dv.dataElement];
+                                var val = dv.value;
+                                if ( val && de ){
+                                    val = CommonUtils.formatDataValue(null, val, de, optionSets, 'USER');
+                                    if ( de.code === 'FAQ' ){
+                                        faq.faq = val;
+                                    }
+                                    if ( de.code === 'FAQ_RESPONSE' ){
+                                        faq.faqResponse = val;
+                                    }
+                                }
+                            });
+                        }
+                        faqs.push( faq );
+                    });
+                }
+                faqs = orderByFilter(faqs, '-eventDate').reverse();
+                return faqs;
+
+            }, function(response){
+                CommonUtils.errorNotifier(response);
+            });
+
+            return promise;
+        }
+    };
+})
+
+.service('DocumentService', function($http, $q, DHIS2URL, CommonUtils, DateUtils, FileService, OptionSetService) {
 
     var bytesToSize = function ( bytes ){
         var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -1897,30 +1932,104 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
     };
 })
 
-.service('ProjectService', function($http, DateUtils, CommonUtils, OptionSetService){
+.service('ProjectService', function($http, orderByFilter, DateUtils, CommonUtils, OptionSetService){
     return {
-        getByProgram: function(orgUnit, program, optionSets, attributesById){
-            var url = dhis2.ndp.apiUrl + '/trackedEntityInstances.json?ouMode=DESCENDANTS&order=created:desc&paging=false&ou=' + orgUnit.id + '&program=' + program.id;
+        getByProgram: function(orgUnit, program, optionSets, attributesById, dataElementsById){
+            var url = dhis2.ndp.apiUrl + '/tracker/trackedEntities.json?ouMode=DESCENDANTS&order=created:desc&fields=*&paging=false&orgUnit=' + orgUnit.id + '&program=' + program.id;
             var promise = $http.get( url ).then(function(response){
-                var teis = response.data && response.data.trackedEntityInstances ? response.data.trackedEntityInstances : [];
+                var teis = response.data && response.data.instances ? response.data.instances : [];
                 var projects = [];
                 angular.forEach(teis, function(tei){
+                    var startDate = '', endDate = '';
                     if( tei.attributes ){
                         var project = {
                             orgUnit: tei.orgUnit,
-                            trackedEntityInstance: tei.trackedEntityInstance
+                            trackedEntityInstance: tei.trackedEntityInstance,
+                            style: {}
                         };
                         angular.forEach(tei.attributes, function(att){
-                            var val = att.value;
                             var attribute = attributesById[att.attribute];
-                            if( attribute && attribute.optionSetValue ){
-                                val = OptionSetService.getName(optionSets[attribute.optionSet.id].options, String(val));
-                            }
+                            var val = att.value;
+                            if( attribute ){
+                                val = CommonUtils.formatDataValue(null, val, attribute, optionSets, 'USER');
+                                if( attribute.code === 'AT_PL_START_DATE' ){
+                                    startDate = val;
+                                }
+                                if( attribute.code === 'AT_PL_END_DATE' ){
+                                    endDate = val;
+                                }
 
+                                if( attribute.code === 'AT_PRIORITY' && att.value ){
+                                    var style = CommonUtils.getFixedTrafficStyle();
+                                    if( att.value === 'High' ){
+                                        project.style[att.attribute] = style.red;
+                                    }
+                                    if( att.value === 'Normal'){
+                                        project.style[att.attribute] = style.yellow;
+                                    }
+                                    if( att.value === 'Low'){
+                                        project.style[att.attribute] = style.green;
+                                    }
+                                }
+                            }
                             project[att.attribute] = val;
                         });
-                        projects.push( project );
+                        if( startDate !== '' && endDate !== '' ){
+                            var duration = DateUtils.getDifference(startDate,endDate);
+                            project.duration = isNaN( duration ) ? '' : Math.floor(duration  / 30 );
+                        }
                     }
+                    if ( tei.enrollments && tei.enrollments.length === 1 ){
+                        project.vote = tei.enrollments[0].orgUnitName;
+                        if ( tei.enrollments[0].events ){
+                            tei.enrollments[0].events = orderByFilter(tei.enrollments[0].events, '-occurredAt').reverse();
+                            var len = tei.enrollments[0].events.length;
+                            var ev = tei.enrollments[0].events[len-1];
+                            if ( ev && ev.dataValues ){
+                                project.status = {};
+                                angular.forEach(ev.dataValues, function(dv){
+                                    var de = dataElementsById[dv.dataElement];
+                                    var val = dv.value;
+                                    if( de ){
+                                        val = CommonUtils.formatDataValue(null, val, de, optionSets, 'USER');
+                                    }
+                                    if ( de.code === 'AT_RATING' && val !== '' ){
+                                        var style = CommonUtils.getTrafficColorForValue( val );
+                                        project.style[dv.dataElement] = {
+                                            inlineStyle: style.inlineStyle,
+                                            printStyle: style.printStyle
+                                        };
+                                    }
+                                    if ( de.code === 'AT_PROGRESS_STATUS' && val !== '' ){
+                                        var style = CommonUtils.getFixedTrafficStyle();
+                                        if( dv.value === 'Not started' ){
+                                            project.style[dv.dataElement] = style.red;
+                                        }
+                                        if( dv.value === 'In progress'){
+                                            project.style[dv.dataElement] = style.yellow;
+                                        }
+                                        if( dv.value === ' Completed'){
+                                            project.style[dv.dataElement] = style.green;
+                                        }
+                                        if( dv.value === 'Cancelled'){
+                                            project.style[dv.dataElement] = style.grey;
+                                        }
+                                    }
+                                    if ( de.code === 'AT_DELAYED' && val !== '' ){
+                                        var style = CommonUtils.getFixedTrafficStyle();
+                                        if( dv.value === 'true' ){
+                                            project.style[dv.dataElement] = style.red;
+                                        }
+                                        if( dv.value === 'false'){
+                                            project.style[dv.dataElement] = style.green;
+                                        }
+                                    }
+                                    project.status[dv.dataElement] = val;
+                                });
+                            }
+                        }
+                    }
+                    projects.push( project );
                 });
 
                 return projects;

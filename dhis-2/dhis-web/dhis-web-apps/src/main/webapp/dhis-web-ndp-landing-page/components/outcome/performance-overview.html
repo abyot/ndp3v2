@@ -14,7 +14,7 @@
         </span>
         <div id="performance_overview" class="table-scroll">
             <div ng-include="'views/performance-table-header.html'"></div>
-            <table class="table table-bordered table-striped">
+            <table>
                 <thead>
                     <tr>
                         <th class="sticky"></th>
@@ -32,6 +32,7 @@
                         <th class="sticky">{{'indicator'| translate}}</th>
                         <th class="center sticky"
                             ng-style="header.style"
+                            ng-class="header.printStyle"
                             ng-repeat="header in model.performanceOverviewHeaders">
                             {{header.id}}
                         </th>
@@ -40,7 +41,7 @@
                 <tbody>
                     <tr ng-repeat="row in model.performanceOverviewData">
                         <td class="vertical-center" ng-repeat="col in row" rowspan="{{col.pSpan}}" ng-style="col.style">
-                            {{col.val}}
+                            {{col.val}}<span ng-if="col.hasPercent">&nbsp; %</span>
                         </td>
                     </tr>
                 </tbody>

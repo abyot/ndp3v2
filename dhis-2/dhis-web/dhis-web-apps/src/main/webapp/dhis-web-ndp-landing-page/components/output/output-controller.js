@@ -51,7 +51,8 @@ ndpFramework.controller('OutputController',
         {id: 'result', title: 'targets', order: 1, view: 'components/output/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/output/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/output/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'completeness', title: 'completeness', order: 4, view: 'components/output/completeness.html', class: 'main-horizontal-menu'}
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'components/output/cluster-performance.html', class: 'main-horizontal-menu'},
+        {id: 'completeness', title: 'completeness', order: 5, view: 'components/output/completeness.html', class: 'main-horizontal-menu'}
     ];
 
     //Get orgunits for the logged in user
@@ -328,18 +329,6 @@ ndpFramework.controller('OutputController',
                     MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-intervention').then(function(dataElementGroupSets){
                         $scope.model.dataElementGroupSets = dataElementGroupSets;
 
-                        var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
-                        $scope.model.allPeriods = angular.copy( periods );
-                        $scope.model.periods = periods;
-
-                        var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
-
-                        angular.forEach($scope.model.periods, function(pe){
-                            if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
-                                $scope.model.selectedPeriods.push(pe);
-                            }
-                        });
-
                         $scope.model.metaDataCached = true;
 
                         if( $scope.model.selectedMenu && $scope.model.selectedMenu.ndp && $scope.model.selectedMenu.code ){
@@ -416,6 +405,7 @@ ndpFramework.controller('OutputController',
                                         performanceOverviewHeaders: $scope.model.performanceOverviewHeaders
                                     };
 
+                                    console.log('the periods:  ', $scope.model.selectedPeriods);
                                     var processedData = Analytics.processData( dataParams );
 
                                     $scope.model.dataHeaders = processedData.dataHeaders;

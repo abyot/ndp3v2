@@ -1,6 +1,6 @@
 <table>
     <tr>
-        <td class="col-sm-2" ng-repeat="header in model.performanceOverviewLegends" ng-style="header.style">
+        <td class="center sticky col-sm-2" ng-repeat="header in model.performanceOverviewLegends" ng-style="header.style" ng-class="header.printStyle">
             {{header.name}}
         </td>
     </tr>

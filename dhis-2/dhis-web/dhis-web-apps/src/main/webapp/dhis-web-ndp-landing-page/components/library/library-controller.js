@@ -10,7 +10,7 @@ ndpFramework.controller('LibraryController',
                 $window,
                 $modal,
                 NotificationService,
-                EventService,
+                DocumentService,
                 MetaDataFactory,
                 OrgUnitFactory,
                 DHIS2URL) {
@@ -149,7 +149,7 @@ ndpFramework.controller('LibraryController',
 
         if( $scope.selectedOrgUnit && $scope.selectedOrgUnit.id && $scope.model.selectedProgram && $scope.model.selectedProgram.id ){
 
-            EventService.getByOrgUnitAndProgram($scope.selectedOrgUnit.id,
+            DocumentService.getByOrgUnitAndProgram($scope.selectedOrgUnit.id,
             'DESCENDANTS',
             $scope.model.selectedProgram.id,
             $scope.model.typeDataElement,

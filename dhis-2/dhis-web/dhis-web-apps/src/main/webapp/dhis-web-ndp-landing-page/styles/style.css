@@ -42,7 +42,7 @@ html, body {
     display: none;
 }
 
-@media print {
+@media print {   
     .not-for-screen {
         display: block;
     }
@@ -98,8 +98,6 @@ html, body {
     }
 
     .table-scroll th {
-        background: #d0d0d2 !important;
-        color: #000 !important;
         position: static !important;        
     }
     
@@ -113,7 +111,86 @@ html, body {
     .table-scroll td {
         vertical-align: middle !important;
     }
+    
+    /*.table-scroll {
+        height: 100% !important;
+        overflow: auto !important;
+        width: 100% !important;
+    }
 
+    .table-scroll thead tr:nth-child(2) th {
+        top: 32px;
+    }*/
+        
+    .red-background {
+        background-color: #CD615A !important;
+        color: #000;
+    }
+
+    .yellow-background {
+        background-color: #F4CD4D !important;
+        color: #000;
+    }
+
+    .green-background {
+        background-color: #339D73 !important;
+        color: #000;
+    }
+
+    .blue-background {
+        background-color: #00b0f0 !important;
+        color: #000;
+    }
+
+    .white-background {
+        background-color: #fff !important;
+        color: #000;
+    }
+
+    .grey-background {
+        background-color: #aaa !important;
+        color: #000;
+    }
+}
+
+.table-scroll {
+    position: relative;
+    width: 100%;
+    z-index: 1;
+    margin: auto;
+    overflow: scroll;
+    height: 75vh;
+}
+
+.table-scroll table {
+    width: 100%;
+    min-width: 100px;
+    margin: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-scroll th {
+    background: #bbd1ee;
+    color: #333;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+}
+
+.table-scroll th, td {
+    padding: 5px;
+    border: 1px solid #cad5e5;
+    vertical-align: middle !important;
+}
+
+.table-scroll tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.table-scroll thead tr:nth-child(2) th {
+    top: 32px;
 }
 
 .category-menu {
@@ -144,43 +221,6 @@ html, body {
 .vertical-center {
     vertical-align: middle !important;
     display: table-cell;
-}
-
-
-.dhis2-info-table > thead > tr > th,
-.dhis2-info-table > tbody > tr > th,
-.dhis2-info-table > tfoot > tr > th,
-.dhis2-info-table > thead > tr > td,
-.dhis2-info-table > tbody > tr > td,
-.dhis2-info-table > tfoot > tr > td {
-    border: 1px solid #ad892e;
-    padding: 8px;
-    line-height: 1.42;
-    margin-bottom: 20px;
-    border-collapse: collapse;
-    border-spacing: 0;
-}
-
-
-.dhis2-table-hover > tbody > tr:hover > td, .table-hover > tbody > tr:hover > th {
-    background-color: #fff !important;
-    cursor: pointer;
-}
-
-.dhis2-table-striped-border tr th {
-    border: 1px solid #cad5e5;
-}
-
-.dhis2-table-striped-border tr td {
-    border: 1px solid #cad5e5;
-}
-
-.dhis2-table-striped-border > tbody > tr:nth-child(odd)> td, .dhis2-table-striped > tbody > tr:nth-child(odd)> th {
-    background-color: #ebf0f6;
-}
-
-.listTable td {
-    padding: 5px;
 }
 
 .font-18 {
@@ -632,39 +672,13 @@ ul.tree ul li:last-child:before {
     cursor: pointer;
 }
 
-.table-scroll {
-    position: relative;
-    width: 100%;
-    z-index: 1;
-    margin: auto;
-    overflow: scroll;
-    height: 75vh;
+.selected-faq {
+    font-weight: bold;
+    font-size: 16px !important;
 }
 
-.table-scroll table {
-    width: 100%;
-    min-width: 100px;
-    margin: auto;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-
-.table-wrap {
-    position: relative;
-}
-
-.table-scroll thead th {
-    background: #bbd1ee;
-    color: #333;
-    position: -webkit-sticky;
-    position: sticky;
-    top: 0;
-    z-index: 9999;
-}
-
-.table-scroll thead tr:nth-child(2) th {
-    top: 30px;
+.selected-faq-container {
+    padding-bottom: 40px !important;
 }
 
 .selected-ndp-menu {

@@ -232,6 +232,33 @@ var d2Services = angular.module('d2Services', ['ngResource'])
             dateAfterOffset = Date.parse(dateAfterOffset);
             dateAfterOffset = $filter('date')(dateAfterOffset, calendarSetting.keyDateFormat);
             return dateAfterOffset;
+        },
+        getDifference: function(startDate, endDate){
+            var firstdate = this.toMomentFormat(startDate);
+            var seconddate = this.toMomentFormat(endDate);
+            return seconddate.diff(firstdate,'days');
+        },
+        toMomentFormat: function( dateValue ){
+            if (!dateValue) {
+                return;
+            }
+
+            dateValue = $filter('trimquotes')(dateValue);
+            var calendarSetting = CalendarService.getSetting();
+            var dateValues = dateValue.split('-');
+            var _dateValue = dateValues[0] + '/' + dateValues[1] + '/' + dateValues[2];
+
+            if ( calendarSetting.momentFormat === 'DD-MM-YYYY' ){
+                return moment(_dateValue, 'DD/MM/YYYY');
+            }
+            return moment(_dateValue, 'YYYY/MM/DD');
+        },
+        isValid: function( date ){
+            if(!date){
+                return false;
+            }
+            var convertedDate = this.format( date );
+            return date === convertedDate;
         }
     };
 })
@@ -297,6 +324,15 @@ var d2Services = angular.module('d2Services', ['ngResource'])
                 }
                 else{
                     val = DateUtils.formatFromUserToApi(val);
+                }
+            }
+            if(obj.valueType === 'BOOLEAN'){
+
+                if(destination === 'USER'){
+                    val = val === 'true' ? 'Yes' : 'No';
+                }
+                else{
+                    val = val === 'yes' ? 'true' : '';
                 }
             }
             if(obj.valueType === 'TRUE_ONLY'){
@@ -637,17 +673,86 @@ var d2Services = angular.module('d2Services', ['ngResource'])
         },
         getPerformanceOverviewHeaders: function(){
 
-            var ac = { id: 'A', name: $translate.instant('achieved') + '  ( >= 100%)', lRange:  100, style: {"background-color": '#339D73 !important', "color": '#000'} };
+            var ac = { id: 'A', name: $translate.instant('achieved') + '  ( >= 100%)', lRange:  100, printStyle: 'green-background', style: {"background-color": '#339D73 !important', "color": '#000'} };
 
-            var ma = { id: 'M', name: $translate.instant('moderately_achieved') + '  ( 75% - 99% )', lRange: 75, hRange: 99, style: {"background-color": '#F4CD4D !important', "color": '#000'} };
+            var ma = { id: 'M', name: $translate.instant('moderately_achieved') + '  ( 75% - 99% )', lRange: 75, hRange: 99, printStyle: 'yellow-background', style: {"background-color": '#F4CD4D !important', "color": '#000'} };
 
-            var na = { id: 'N', name: $translate.instant('not_achieved') + '  ( < 75% )', hRange: 74, style: {"background-color": '#CD615A !important', "color": '#000'} };
+            var na = { id: 'N', name: $translate.instant('not_achieved') + '  ( < 75% )', hRange: 74, printStyle: 'red-background', style: {"background-color": '#CD615A !important', "color": '#000'} };
 
-            var nd = { id: 'X', name: $translate.instant('no_data'), style: {"background-color": '#aaa !important', "color": '#000'}};
+            var nd = { id: 'X', name: $translate.instant('no_data'), printStyle: 'grey-background', style: {"background-color": '#aaa !important', "color": '#000'}};
 
             //var al = { id: 'All', name: $translate.instant('weighted_score'), style: {"background-color": '#fff !important', "color": '#000'}};
 
             return [ac, ma, na, nd];
+        },
+        getFixedRanges: function(){
+            /*ranges = {
+                green: 15,
+                greenColor: '#339D73',
+                yellowStart: 15,
+                yellowEnd: 30,
+                yellowColor: '#F4CD4D',
+                red: 30,
+                redColor: '#CD615A'
+            };*/
+            var ranges = {
+                green: 100,
+                greenColor: '#339D73',
+                yellowStart: 75,
+                yellowEnd: 99,
+                yellowColor: '#F4CD4D',
+                red: 74,
+                redColor: '#CD615A',
+                greyColor: '#aaa'
+            };
+            return ranges;
+        },
+        getFixedTrafficStyle: function(){
+            var ranges = this.getFixedRanges();
+            var style = {
+                red: {
+                    inlineStyle: {"background-color": ranges.redColor},
+                    printStyle: 'red-background'
+                },
+                yellow: {
+                    inlineStyle: {"background-color": ranges.yellowColor},
+                    printStyle: 'yellow-background'
+                },
+                green: {
+                    inlineStyle: {"background-color": ranges.greenColor},
+                    printStyle: 'green-background'
+                },
+                grey: {
+                    inlineStyle: {"background-color": ranges.grey},
+                    printStyle: 'grey-background'
+                }
+            };
+            return style;
+        },
+        getTrafficColorForValue: function( val ){
+            var ranges = this.getFixedRanges();
+            var color = '', style = {};
+            if ( val === '' || val === null) {
+                color = '#aaa';
+                style.printStyle = 'grey-background';
+                style.inlineStyle = {"background-color": color};
+                return style;
+            }
+            val = Number( val );
+            if ( val >= ranges.green ){
+                color = ranges.greenColor;
+                style.printStyle = 'green-background';
+            }
+            else if( val >= ranges.yellowStart && val <= ranges.yellowEnd ){
+                color = ranges.yellowColor;
+                style.printStyle = 'yellow-background';
+            }
+            else {
+                color = ranges.redColor;
+                style.printStyle = 'red-background';
+            }
+            style.inlineStyle = {"background-color": color};
+            return style;
         }
     };
 })

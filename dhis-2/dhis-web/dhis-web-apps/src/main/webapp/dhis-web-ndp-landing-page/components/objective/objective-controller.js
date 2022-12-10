@@ -18,7 +18,8 @@ ndpFramework.controller('ObjectiveController',
         Analytics,
         DashboardService,
         CommonUtils,
-        FinancialDataService) {
+        FinancialDataService,
+        DataValueService) {
 
     $scope.showReportFilters = false;
 
@@ -49,7 +50,10 @@ ndpFramework.controller('ObjectiveController',
         groupSetSize: {},
         physicalPerformance: true,
         financialPerformance: true,
-        showProjectDetails: false
+        showProjectDetails: false,
+        showExplanation: false,
+        explanations: [],
+        commentRow: {}
     };
 
     $scope.model.horizontalMenus = [
@@ -362,6 +366,7 @@ ndpFramework.controller('ObjectiveController',
                         $scope.model.denominator = processedData.completenessDen;
                         $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
                         $scope.model.performanceOverviewData = processedData.performanceOverviewData;
+                        $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
                     }
                 });
             });
@@ -407,6 +412,43 @@ ndpFramework.controller('ObjectiveController',
         reportName += ".xls";
 
         saveAs(blob, reportName);
+    };
+
+    $scope.getExplanations = function(){
+        $scope.model.showExplanation = true;
+        var dataValueSetUrl = 'orgUnit=' + $scope.selectedOrgUnit.id;
+        dataValueSetUrl += '&children=true';
+        dataValueSetUrl += '&startDate=' + $scope.model.selectedPeriods[0].startDate;
+        dataValueSetUrl += '&endDate='  + $scope.model.selectedPeriods.slice(-1)[0].endDate;
+
+        angular.forEach($scope.model.dataElementGroup, function(deg){
+            dataValueSetUrl += '&dataElementGroup=' + deg.id;
+        });
+
+        DataValueService.getDataValueSet( dataValueSetUrl ).then(function( response ){
+            if ( response && response.dataValues){
+                angular.forEach(response.dataValues, function(dv){
+                    if(dv.comment){
+                        dv.comment = JSON.parse( dv.comment );
+                        if ( dv.comment.explanation ){
+                            $scope.model.explanations.push({
+                                dataElement: dv.dataElement,
+                                order: $scope.model.dataElementRowIndex[dv.dataElement],
+                                comment: dv.comment.explanation
+                            });
+                        }
+                    }
+                });
+
+                $scope.model.explanations = orderByFilter( $scope.model.explanations, '-order').reverse();
+
+                var index = 1;
+                angular.forEach($scope.model.explanations, function(exp){
+                    $scope.model.commentRow[exp.dataElement] = index;
+                    index++;
+                });
+            }
+        });
     };
 
     $scope.getIndicatorDictionary = function(item) {

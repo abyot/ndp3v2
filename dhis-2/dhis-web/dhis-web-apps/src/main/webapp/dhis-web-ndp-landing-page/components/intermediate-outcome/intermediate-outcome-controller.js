@@ -52,7 +52,8 @@ ndpFramework.controller('IntermediateOutcomeController',
         {id: 'result', title: 'targets', order: 1, view: 'components/intermediate-outcome/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/intermediate-outcome/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/intermediate-outcome/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'completeness', title: 'completeness', order: 4, view: 'components/intermediate-outcome/completeness.html', class: 'main-horizontal-menu'}
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'components/intermediate-outcome/cluster-performance.html', class: 'main-horizontal-menu'},
+        {id: 'completeness', title: 'completeness', order: 5, view: 'components/intermediate-outcome/completeness.html', class: 'main-horizontal-menu'}
     ];
 
     //Get orgunits for the logged in user

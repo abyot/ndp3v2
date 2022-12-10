@@ -237,7 +237,7 @@
                 "domain": "FAQ",
                 "code": "FAQ",
                 "displayName": "faqs",
-                "view": "views/faq.html",
+                "view": "components/faq/faq.html",
                 "hasNoNDP": true,
                 "color": "dg-menu"
             }
