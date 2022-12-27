@@ -17,6 +17,16 @@
                     </ui-select>
                 </div>
             </div>
+            <div class="row vertical-spacing pull-right">
+                <div class="col-sm-12">
+                    <button type="button"
+                            class="btn btn-primary"
+                            ng-disabled="!model.selectedProgram"
+                            ng-click="fetchProgramDetails()">
+                        {{'display_report'| translate}}
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="col-sm-5 blue-info-area add-small-left-padding">
             <div ng-include="'views/report-filter/report-filters-orgunit.html'"></div>
@@ -86,7 +96,7 @@
         </div>
         <div class="col-sm-12" ng-if="model.projects.length === 0 && model.projectsFetched">
             <div class="alert alert-warning">
-                {{'no_projects_available'| translate}}
+                {{'no_data_to_show'| translate}}
             </div>
         </div>
     </div>

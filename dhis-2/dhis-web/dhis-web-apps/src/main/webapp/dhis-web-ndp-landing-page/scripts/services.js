@@ -270,12 +270,83 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                             }
                         }
                     }
+                    
+                    var actualDimension = null;
+                    var targetDimension = null;
+                    var baselineDimension = null;
+                    angular.forEach(dimension.options, function(op){
+                        if ( op.dimensionType === 'actual' ){
+                            actualDimension = op;
+                        }
+                        if ( op.dimensionType === 'target' ){
+                            targetDimension = op;
+                        }
+                        if ( op.dimensionType === 'baseline' ){
+                            baselineDimension = op;
+                        }
+                    });
+                    
                     $rootScope.$apply(function(){
-                        def.resolve(dimension);
+                        def.resolve({bta: dimension, actual: actualDimension, target: targetDimension, baseline: baselineDimension});
                     });
                 });
             });
             return def.promise;
+        },
+        getBtaAndBsrDimensions: function(){
+            
+            var def = $q.defer();
+
+            this.getBtaDimensions().then(function( bta ){
+              
+                var dimension = {options: [], category: null};
+                DDStorageService.currentStore.open().done(function(){
+                    DDStorageService.currentStore.getAll('categoryCombos').done(function(categoryCombos){
+                        var catFound = false;
+                        for( var i=0; i<categoryCombos.length && !catFound; i++){
+                           for( var j=0; j<categoryCombos[i].categories.length;j++){
+                               if( categoryCombos[i].categories[j].bsrDimension ){
+                                   catFound = true;
+                                   dimension.category = categoryCombos[i].categories[j].id;
+                                   dimension.options = categoryCombos[i].categories[j].categoryOptions;
+                                   dimension.categoryCombo = categoryCombos[i];
+                                   break;
+                               }
+                           }
+                       }
+
+                       var budgetDimension = null;
+                       var releaseDimension = null;
+                       var spentDimension = null;
+                       angular.forEach(dimension.options, function(op){
+                           if ( op.dimensionType === 'budget' ){
+                               budgetDimension = op;
+                           }
+                           if ( op.dimensionType === 'release' ){
+                               releaseDimension = op;
+                           }
+                           if ( op.dimensionType === 'spent' ){
+                               spentDimension = op;
+                           }
+                       });
+
+                       var res = {
+                           bsr: dimension,
+                           budget: budgetDimension,
+                           release: releaseDimension,
+                           spent: spentDimension
+                       };
+                       
+                       
+                       $rootScope.$apply(function(){
+                           def.resolve( angular.extend( res, bta ) );
+                       });
+                    });
+                });                                
+            });
+            
+            return def.promise;
+            
         },
         getLlgFinanceDimensions: function(uid, sectors){
             var def = $q.defer();
@@ -870,7 +941,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
         },
         processData: function( dataParams ){
 
-            var keyDataParams = ['data', 'metaData', 'cost', 'reportPeriods', 'bta', 'selectedDataElementGroupSets', 'dataElementGroups', 'dataElementsById'];
+            var keyDataParams = ['data', 'metaData', 'cost', 'reportPeriods', 'bta', 'selectedDataElementGroupSets', 'dataElementGroups', 'dataElementsById', 'dataElementGroupsById'];
 
             if( !dataParams ){
                 NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_report_parameters"));
@@ -906,6 +977,8 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             var redCells = 0, yellowCells = 0, greenCells = 0, totalRows = 0, dataElementRows = 0;
             var hasPhysicalPerformanceData = false;
             var dataElementRowIndex = {};
+            var tableRows = [];
+            var povTableRows = [];
 
             var mergeBtaData = function( _data ){
                 var data = angular.copy( _data );
@@ -1203,7 +1276,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 pe.hasData = d && d.length > 0;
                 pe.hasTargetData = targetData && targetData.length > 0;
 
-                if (dataParams.displayActionData)
+                /*if (dataParams.displayActionData)
                 {
                     if ( pe.hasData ){
                         colSpan++;
@@ -1231,6 +1304,28 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                             name: $translate.instant("budget"),
                             dimension: 'budget'});
                     }
+                }*/
+                if ( dataParams.displayActionBudgetData ){
+                    var budgetSpentReleaseDimensions = $.map(dataParams.bsr.options, function(d){return d.id;});
+                    
+                    angular.forEach(budgetSpentReleaseDimensions, function(dm){
+                        var filterParams = {pe: pe.id};
+                        filterParams[dataParams.bsr.category] = dm;
+                        var d = $filter('dataFilter')(data, filterParams);
+                        if( d && d.length > 0 ){
+                            if (dataParams.displayActionData && dataParams.targetDimension && dataParams.targetDimension.id !== dm )
+                            {
+                                return;
+                            }
+                            colSpan++;
+                            dataHeaders.push({
+                                periodId: pe.id,
+                                periodStart: pe.startDate,
+                                periodEnd: pe.endDate,
+                                dimensionId: dm,
+                                dimension: dataParams.bta.category});
+                        }
+                    });
                 }
                 else{
                     angular.forEach(baseLineTargetActualDimensions, function(dm){
@@ -1280,7 +1375,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 angular.forEach(dataParams.selectedDataElementGroupSets, function(degs){
                     degs.expected = {};
                     degs.available = {};
-                    var groupSet = {val: degs.displayName, span: 0, pSpan: 0};
+                    /*var groupSet = {val: degs.displayName, span: 0, pSpan: 0};
                     var addLeadingRow = function(){
                         resultRow.push(groupSet);
                         physicalPerformanceRow.push(groupSet);
@@ -1599,7 +1694,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
                         parsedPhysicalPerformanceRow.push(physicalPerformanceRow);
                         physicalPerformanceRow = [];
-                    };
+                    };*/
 
                     var generateCompletenessInfo = function( degs ){
                         angular.forEach(degs.dataElementGroups, function(deg){
@@ -1625,9 +1720,107 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                         });
                     };
 
-                    generateCompletenessInfo( degs );
+                    generateCompletenessInfo( degs );                    
+                    
+                    angular.forEach(degs.dataElementGroups, function(_deg){
+                        var deg = dataParams.dataElementGroupsById[_deg.id];
+                        var deCount = 0;
+                        var pov = {};
+                        var povPercent = {};
+                        if ( deg && deg.dataElements && deg.dataElements.length > 0 ){                            
+                            angular.forEach(deg.dataElements, function(de){
+                                angular.forEach(de.categoryOptionCombos, function(oc){
+                                    deCount++;
+                                    var tableRow = {
+                                        dataElementId: de.id,
+                                        dataElement: de.displayName + (oc.displayName === 'default' ? '' : ' - ' + oc.displayName),
+                                        dataElementGroup: deg.displayName,
+                                        dataElementGroupSet: degs.displayName,
+                                        values: {},
+                                        styles: {}
+                                    };
+                                    tableRows.push( tableRow );
+                                    
+                                    angular.forEach(dataHeaders, function(dh){                                    
+                                        var val = filterResultData(dh, de.id, oc.id, data);
+                                        if ( dh.dimensionId === dataParams.targetDimension.id )
+                                        {
+                                            dh.hasResultData = true;
+                                        }
 
-                    if ( degs.dataElementGroups && degs.dataElementGroups.length > 0 ){
+                                        var trafficLight = "";
+                                        if( dh.dimensionId === dataParams.actualDimension.id ){
+                                            var targetValue = filterTargetData(dh, de.id, oc.id, data);
+                                            trafficLight = getTrafficLight(val, targetValue, de.id, dh.dimensionId);
+                                        }
+                                        tableRow.styles[dh.dimensionId + '.' + dh.periodId] = trafficLight;
+                                        tableRow.values[dh.dimensionId + '.' + dh.periodId] = val;
+                                        
+                                        if ( dh.dimensionId === dataParams.actualDimension.id ){
+                                            var ah = angular.copy(dh);
+                                            ah.dimensionId = dataParams.actualDimension.id;
+                                            var th = angular.copy(dh);
+                                            th.dimensionId = dataParams.targetDimension.id;
+                                            var av = filterResultData(ah, de.id, oc.id, data);
+                                            var tv = filterTargetData(th, de.id, oc.id, data);
+
+                                            if ( !pov[deg.id + '-' + 'A-' + dh.periodId] ){
+                                                pov[deg.id + '-' + 'A-' + dh.periodId] = 0;
+                                            }
+
+                                            if ( !pov[deg.id + '-' + 'M-' + dh.periodId] ){
+                                                pov[deg.id + '-' + 'M-' + dh.periodId] = 0;
+                                            }
+
+                                            if ( !pov[deg.id + '-' + 'N-' + dh.periodId] ){
+                                                pov[deg.id + '-' + 'N-' + dh.periodId] = 0;
+                                            }
+
+                                            if ( !pov[deg.id + '-' + 'X-' + dh.periodId] ){
+                                                pov[deg.id + '-' + 'X-' + dh.periodId] = 0;
+                                            }
+
+                                            if ( !av || !tv ){
+                                                pov[deg.id + '-' + 'X-' + dh.periodId] +=1;
+                                            }
+                                            else{
+                                                var t = CommonUtils.getPercent( av, tv, true, true);
+                                                if (t >= 100){
+                                                    pov[deg.id + '-' + 'A-' + dh.periodId] +=1;
+                                                }
+                                                else if ( t>=75 && t<=99 ){
+                                                    pov[deg.id + '-' + 'M-' + dh.periodId] +=1;
+                                                }
+                                                else {
+                                                    pov[deg.id + '-' + 'N-' + dh.periodId] +=1;
+                                                }
+                                            }
+
+                                            //pov[deg.id + '-' + 'All-' + dh.periodId] = ((pov[deg.id + '-' + 'A-' + dh.periodId]*3 + pov[deg.id + '-' + 'M-' + dh.periodId]*2 + pov[deg.id + '-' + 'N-' + dh.periodId]*1) / deg.dataElements.length).toFixed(2);
+                                        }
+
+                                    });
+                                    angular.forEach(performanceOverviewHeaders, function(ph){
+                                        var v = pov[deg.id + '-' + ph.id + '-' + ph.period];
+                                        var prcnt = CommonUtils.getPercent( v, deg.dataElements.length, true, true);
+                                        povPercent[deg.id + '-' + ph.id + '-' + ph.period] = prcnt;
+                                    });
+                                    
+                                });                            
+                            });                            
+                        }
+                        var povTableRow = {
+                            dataElementSize: deCount,
+                            dataElementGroup: deg.displayName,
+                            dataElementGroupId: deg.id,
+                            dataElementGroupSet: degs.displayName,
+                            pov: pov,
+                            povPercent: povPercent
+                        };
+                        povTableRows.push( povTableRow );
+                    });
+
+                    /*if ( degs.dataElementGroups && degs.dataElementGroups.length > 0 ){
                         addLeadingRow();
                         angular.forEach(degs.dataElementGroups, function(deg){
                             if( dataParams.selectedDataElementGroup && dataParams.selectedDataElementGroup.id ){
@@ -1662,7 +1855,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     }
                     else{
                         generateEmptyRow();
-                    }
+                    }*/
                 });
                 resultData = parsedResultRow;
                 physicalPerformanceData = parsedPhysicalPerformanceRow;
@@ -1693,7 +1886,9 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 completenessDen: completenessDen,
                 selectedDataElementGroupSets: dataParams.selectedDataElementGroupSets,
                 performanceOverviewData: performanceOverviewData,
-                dataElementRowIndex: dataElementRowIndex
+                dataElementRowIndex: dataElementRowIndex,
+                tableRows: tableRows,
+                povTableRows: povTableRows
             };
         }
     };
@@ -2117,56 +2312,6 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 return response.data;
             }, function( response ){
                 CommonUtils.errorNotifier(response);
-                return response.data;
-            });
-            return promise;
-        }
-    };
-})
-
-.service('DashboardService', function($http, CommonUtils, DashboardItemService) {
-
-    return {
-        getByName: function( dashboardName ){
-            var promise = $http.get('../api/dashboards.json?filter=name:eq:' + dashboardName + '&filter=publicAccess:eq:r-------&paging=false&fields=id,name,dashboardItems[id,type,visualization[id,displayName]]' ).then(function(response){
-                var result = {charts: [], tables: [], maps: [], dashboardItems: []};
-                var itemsById = [];
-                if( response.data && response.data.dashboards[0]){
-                    angular.forEach(response.data.dashboards[0].dashboardItems, function(item){
-                        result.dashboardItems.push( item );
-                        itemsById[item.id] = {id: item.id, name: item.visualization.displayName, type: item.type};
-                        var _item = {url: '..', el: item.id, id: item.visualization.id};
-                        if ( item.type === 'CHART' ){
-                            result.charts.push( _item );
-                        }
-                        else if ( item.type === 'REPORT_TABLE' ){
-                            result.tables.push( _item );
-                        }
-                        else if ( item.type === 'MAP' ){
-                            result.maps.push( _item );
-                        }
-                    });
-
-                    DashboardItemService.setDashboardItems( itemsById );
-
-                }
-                return result;
-            }, function( response ){
-                CommonUtils.errorNotifier(response);
-                return response.data;
-            });
-            return promise;
-        },
-        download: function( metadata ){
-            var url = dhis2.ndp.apiUrl + '/svg.png';
-            var serializedData = $.param({filename: metadata.fileName, svg: metadata.svg});
-            var promise = $http({
-                method: 'POST',
-                url: url,
-                data: serializedData,
-                responseType: 'arraybuffer',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-            }).then(function( response ){
                 return response.data;
             });
             return promise;

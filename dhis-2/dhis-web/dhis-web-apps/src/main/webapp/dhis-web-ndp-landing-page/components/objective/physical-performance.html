@@ -1,25 +1,9 @@
 <div ng-include="'components/objective/filters.html'"></div>
 <div class="row" ng-if="model.reportReady">
-    <div class="col-sm-12" ng-if="model.hasPhysicalPerformanceData">
-        <span class=" hideInPrint vertical-spacing">
-            <span class="dropdown">
-                <label class="btn btn-default dropdown-toggle" data-toggle="dropdown" ng-attr-title="{{'download_as'| translate}}"><i class="fa fa-download"></i></label>
-                <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">{{'download_as'| translate}}</h6></li>
-                    <li class="divider"></li>
-                    <li><a href ng-click="exportData('performance')">{{'csv'| translate}}</a></li>
-                    <li><a href onclick="javascript:window.print()">{{'pdf'| translate}}</a></li>
-                </ul>
-            </span>
-            <span class="dropdown small-horizontal-spacing">
-                <button class="btn btn-default" ng-click="getExplanations()">
-                    <i class="fa fa-comment cursor-pointer" aria-hidden="true" title="{{ model.showExplanation ? 'hide_explanations' : 'show_explanations' | translate}}"></i>
-                </button>
-            </span>
-        </span>
-        <div id="performance" class="table-scroll">
+    <div ng-if="model.hasPhysicalPerformanceData">
+        <div ng-include="'views/performance-header.html'"></div>
+        <div id="performance" class="col-sm-12 table-scroll">
             <div ng-include="'views/explanation-list.html'"></div>
-            <div ng-include="'views/performance-table-header.html'"></div>
             <table>
                 <thead>
                     <tr>
@@ -37,27 +21,31 @@
                         <th class="sticky">{{model.selectedMenu.ndp}} {{'objectives'| translate}}</th>
                         <th>{{'kras'| translate}}</th>
                         <th>{{'indicators'| translate}}</th>
-                        <th class="center sticky" ng-repeat="header in model.dataHeaders">
+                        <th class="sticky" ng-repeat="header in model.dataHeaders">
                             {{model.metaData.items[header.dimensionId].name}}
                         </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="row in model.physicalPerformanceData">
-                        <td class="vertical-center" ng-repeat="col in row" rowspan="{{col.span}}" ng-style="col.trafficLight" ng-class="col.printStyle">
-                            <span ng-if="col.details" ng-click="getDataValueExplanation(col)" title="{{'click_here_for_details'| translate}}" class="link-text">
-                                {{col.val}}
-                            </span>
-                            <span ng-if="!col.details && !col.info">
-                                {{col.val}}
-                            </span>
-                            <span ng-if="col.info" ng-click="getIndicatorDictionary(col.info)">
-                                <span ng-if="model.showExplanation && model.commentRow[col.info]">[{{model.commentRow[col.info]}}]</span> {{col.val}}
-                                <i class="fa fa-info-circle info-icon cursor-pointer hideInPrint" aria-hidden="true" title="{{'indicator_dictionary'| translate}}"></i>
-                            </span>
-                            <span ng-if="col.vision2040">
-                                {{col.vision2040}}
-                            </span>
+                    <tr ng-repeat="row in model.tableRows">
+                        <td>
+                            {{row.dataElementGroupSet}}
+                        </td>
+                        <td>
+                            {{row.dataElementGroup}}
+                        </td>
+                        <td>
+                            <span ng-if="model.showExplanation">[{{model.commentRow[row.dataElementId]}}]</span> {{row.dataElement}}
+                            <i ng-click="getIndicatorDictionary(row.dataElementId)" class="fa fa-info-circle info-icon cursor-pointer hideInPrint" aria-hidden="true" title="{{'indicator_dictionary'| translate}}"></i>
+                        </td>
+                        <td ng-repeat="dh in model.dataHeaders"
+                            ng-style="row.styles[dh.dimensionId + '.' + dh.periodId].trafficLight"
+                            ng-class="row.styles[dh.dimensionId + '.' + dh.periodId].printStyle">
+                            {{row.values[dh.dimensionId + '.' + dh.periodId]}}
+                            {{row.styles[dh.dimensionId + '.' + dh.periodId].trafficLight}}
+                        </td>
+                        <td>
+                            {{row.vision2040}}
                         </td>
                     </tr>
                 </tbody>

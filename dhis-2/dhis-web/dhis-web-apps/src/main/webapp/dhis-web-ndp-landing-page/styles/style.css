@@ -87,8 +87,6 @@ html, body {
     }
 
     .table-scroll table {
-        padding: 20px;
-        width: 100% !important;
         border-collapse: collapse !important;
     }
     
@@ -112,16 +110,20 @@ html, body {
         vertical-align: middle !important;
     }
     
-    /*.table-scroll {
+    .table-scroll {
         height: 100% !important;
         overflow: auto !important;
         width: 100% !important;
     }
 
+    .table-scroll tr:nth-child(even) {
+        background-color: #f2f2f2 !important;
+    }
+
     .table-scroll thead tr:nth-child(2) th {
         top: 32px;
-    }*/
-        
+    }
+      
     .red-background {
         background-color: #CD615A !important;
         color: #000;
@@ -220,7 +222,7 @@ html, body {
 
 .vertical-center {
     vertical-align: middle !important;
-    display: table-cell;
+    /*display: table-cell;*/
 }
 
 .font-18 {

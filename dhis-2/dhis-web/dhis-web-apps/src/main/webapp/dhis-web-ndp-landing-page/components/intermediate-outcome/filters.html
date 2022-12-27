@@ -35,6 +35,7 @@
                 <div class="col-sm-12">
                     <button type="button"
                             class="btn btn-primary"
+                            ng-disabled="!model.selectedNdpProgram"
                             ng-click="getAnalyticsData()">
                         {{'display_report'| translate}}
                     </button>

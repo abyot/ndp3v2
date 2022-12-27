@@ -17,6 +17,16 @@
                     </ui-select>
                 </div>
             </div>
+            <div class="row vertical-spacing pull-right">
+                <div class="col-sm-12">
+                    <button type="button"
+                            class="btn btn-primary"
+                            ng-disabled="!model.selectedProgram"
+                            ng-click="fetchProgramDetails()">
+                        {{'display_report'| translate}}
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="col-sm-5 blue-info-area add-small-left-padding">
             <div ng-include="'views/report-filter/report-filters-orgunit.html'"></div>
@@ -61,8 +71,8 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr ng-repeat="project in model.projects" >
+                    <tbody ng-repeat="project in model.projects" >
+                        <tr>
                             <td class="vertical-center">{{project.vote}}</td>
                             <td ng-style="project.style[att.trackedEntityAttribute.id].inlineStyle"
                                 ng-class="project.style[att.trackedEntityAttribute.id].printStyle"
@@ -89,9 +99,9 @@
                                 {{project.status[de.dataElement.id]}}
                             </td>
                         </tr>
-                        <!--<tr class="project-details" ng-if="model.showProjectDetails && model.selectedProject.trackedEntityInstance === project.trackedEntityInstance">
+                        <tr class="project-details" ng-if="model.showProjectDetails && model.selectedProject.trackedEntityInstance === project.trackedEntityInstance">
                             <td colspan="100%">
-                                <div ng-include="'views/horizontal-menu.html'"></div>
+                                Need to display full project details
                             </td>
                         </tr>-->
                     </tbody>
@@ -100,7 +110,7 @@
         </div>
         <div class="col-sm-12" ng-if="model.projects.length === 0 && model.projectsFetched">
             <div class="alert alert-warning">
-                {{'no_projects_available'| translate}}
+                {{'no_data_to_show'| translate}}
             </div>
         </div>
     </div>

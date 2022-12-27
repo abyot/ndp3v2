@@ -1,19 +1,8 @@
 <div ng-include="'components/objective/filters.html'"></div>
 <div class="row" ng-if="model.reportReady">
-    <div class="col-sm-12" ng-if="model.hasPhysicalPerformanceData">
-        <span class=" hideInPrint">
-            <span class="dropdown">
-                <label class="btn btn-default dropdown-toggle" data-toggle="dropdown" ng-attr-title="{{'download_as'| translate}}"><i class="fa fa-download"></i></label>
-                <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">{{'download_as'| translate}}</h6></li>
-                    <li class="divider"></li>
-                    <li><a href ng-click="exportData('performance_overview')">{{'csv'| translate}}</a></li>
-                    <li><a href onclick="javascript:window.print()">{{'pdf'| translate}}</a></li>
-                </ul>
-            </span>
-        </span>
-        <div id="performance_overview" class="table-scroll">
-            <div ng-include="'views/performance-table-header.html'"></div>
+    <div ng-if="model.hasPhysicalPerformanceData">
+        <div ng-include="'views/performance-overview-header.html'"></div>
+        <div id="performance_overview" class="col-sm-12 table-scroll">
             <table>
                 <thead>
                     <tr>
@@ -38,10 +27,34 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr ng-repeat="row in model.performanceOverviewData">
-                        <td class="vertical-center" ng-repeat="col in row" rowspan="{{col.pSpan}}" ng-style="col.style" ng-class="col.printStyle">
-                            {{col.val}}<span ng-if="col.hasPercent">&nbsp; %</span>
+                <tbody ng-repeat="row in model.povTableRows">
+                    <tr>
+                        <td>
+                            {{row.dataElementGroupSet}}
+                        </td>
+                        <td>
+                            {{row.dataElementGroup}}
+                        </td>
+                        <td>
+                            {{row.dataElementSize}}
+                        </td>
+                        <td ng-repeat="povh in model.performanceOverviewHeaders">
+                            {{row.pov[row.dataElementGroupId + '-' + povh.id + '-' + povh.period]}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{row.dataElementGroupSet}}
+                        </td>
+                        <td>
+                            {{row.dataElementGroup}}
+                        </td>
+                        <td>
+                            {{row.dataElementSize}}
+                        </td>
+                        <td ng-repeat="povh in model.performanceOverviewHeaders"
+                            ng-init="povValue = row.povPercent[row.dataElementGroupId + '-' + povh.id + '-' + povh.period]">
+                            {{povValue}}<span ng-if="povValue">&nbsp; %</span>
                         </td>
                     </tr>
                 </tbody>

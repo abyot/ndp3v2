@@ -16,7 +16,6 @@ ndpFramework.controller('ActionOutputController',
         OptionComboService,
         ResulstChainService,
         CommonUtils,
-        DashboardService,
         Analytics) {
 
     $scope.model = {
@@ -193,29 +192,31 @@ ndpFramework.controller('ActionOutputController',
                     $scope.model.piapObjectives = $scope.model.resultsFrameworkChain.objectives;
                     $scope.model.interventions = $scope.model.resultsFrameworkChain.interventions;
 
-                    OptionComboService.getBtaDimensions().then(function( bta ){
+                    OptionComboService.getBtaAndBsrDimensions().then(function( response ){
+                        
+                        console.log('bta_bsr:  ', response );
 
-                        if( !bta || !bta.category || !bta.options || bta.options.length !== 3 ){
+                        if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
                             NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
                             return;
                         }
+                        
+                        if( !response || !response.bsr || !response.budget || !response.spent || !response.release ){
+                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bsr_dimensions"));
+                            return;
+                        }
 
-                        $scope.model.bta = bta;
+                        $scope.model.bta = response.bta;
                         $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
-                        $scope.model.actualDimension = null;
-                        $scope.model.targetDimension = null;
-                        $scope.model.baselineDimension = null;
-                        angular.forEach(bta.options, function(op){
-                            if ( op.btaDimensionType === 'actual' ){
-                                $scope.model.actualDimension = op;
-                            }
-                            if ( op.btaDimensionType === 'target' ){
-                                $scope.model.targetDimension = op;
-                            }
-                            if ( op.btaDimensionType === 'baseline' ){
-                                $scope.model.baselineDimension = op;
-                            }
-                        });
+                        $scope.model.actualDimension = response.actual;
+                        $scope.model.targetDimension = response.target;
+                        $scope.model.baselineDimension = response.baseline;
+                        
+                        $scope.model.bsr = response.bsr;
+                        $scope.model.budgetSpentReleaseDimensions = $.map($scope.model.bsr.options, function(d){return d.id;});
+                        $scope.model.budgetDimension = response.budget;
+                        $scope.model.spentDimension = response.spent;
+                        $scope.model.releaseDimension = response.release;
 
                         MetaDataFactory.getAll('dataElements').then(function(dataElements){
 
@@ -245,15 +246,6 @@ ndpFramework.controller('ActionOutputController',
 
                                     $scope.model.metaDataCached = true;
                                     $scope.populateMenu();
-
-                                    /*$scope.model.dashboardName = 'Sub-Programme Outputs';
-                                    DashboardService.getByName( $scope.model.dashboardName ).then(function( result ){
-                                        $scope.model.dashboardItems = result.dashboardItems;
-                                        $scope.model.charts = result.charts;
-                                        $scope.model.tables = result.tables;
-                                        $scope.model.maps = result.maps;
-                                        $scope.model.dashboardFetched = true;
-                                    });*/
                                 });
                             });
                         });
@@ -350,8 +342,13 @@ ndpFramework.controller('ActionOutputController',
 
         if( $scope.model.dataElementGroup && $scope.model.dataElementGroup.length > 0 && $scope.model.selectedPeriods.length > 0){
             analyticsUrl += '&filter=ou:'+ $scope.selectedOrgUnit.id +'&displayProperty=NAME&includeMetadataDetails=true';
-            analyticsUrl += '&dimension=co&dimension=' + $scope.model.bta.category + ':' + $.map($scope.model.baseLineTargetActualDimensions, function(dm){return dm;}).join(';');
+            analyticsUrl += '&dimension=co&dimension=' + $scope.model.bsr.category + ':' + $.map($scope.model.budgetSpentReleaseDimensions, function(dm){return dm;}).join(';');
             analyticsUrl += '&dimension=pe:' + $.map($scope.model.selectedPeriods.concat( $scope.model.basePeriod ), function(pe){return pe.id;}).join(';');
+
+            $scope.model.dataElementGroupsById = $scope.model.dataElementGroup.reduce( function(map, obj){
+                map[obj.id] = obj;
+                return map;
+            }, {});
 
             var des = [];
             angular.forEach($scope.model.dataElementGroup, function(deg){
@@ -376,16 +373,21 @@ ndpFramework.controller('ActionOutputController',
                         actualDimension: $scope.model.actualDimension,
                         targetDimension: $scope.model.targetDimension,
                         baselineDimension: $scope.model.baselineDimension,
+                        bsr: $scope.model.bsr,
+                        budgetDimension: $scope.model.budgetDimension,
+                        spentDimension: $scope.model.spentDimension,
+                        releaseDimension: $scope.model.releaseDimension,
                         selectedDataElementGroupSets: $scope.model.selectedDataElementGroupSets,
                         selectedDataElementGroup: $scope.model.selectedKra,
                         dataElementGroups: $scope.model.dataElementGroups,
                         basePeriod: $scope.model.basePeriod,
                         maxPeriod: $scope.model.selectedPeriods.slice(-1)[0],
                         allPeriods: $scope.model.allPeriods,
+                        dataElementGroupsById: $scope.model.dataElementGroupsById,
                         dataElementsById: $scope.model.dataElementsById,
                         legendSetsById: $scope.model.legendSetsById,
                         defaultLegendSet: $scope.model.defaultLegendSet,
-                        //displayActionBudgetData: true
+                        displayActionBudgetData: true
                     };
 
                     var processedData = Analytics.processData( dataParams );
@@ -401,6 +403,9 @@ ndpFramework.controller('ActionOutputController',
                     $scope.model.numerator = processedData.completenessNum;
                     $scope.model.denominator = processedData.completenessDen;
                     $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
+                    $scope.model.tableRows = processedData.tableRows;
+                    
+                    console.log('dataHeaders:  ', processedData.dataHeaders);
                 }
             });
         }

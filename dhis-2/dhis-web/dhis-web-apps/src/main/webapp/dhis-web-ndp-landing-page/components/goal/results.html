@@ -37,12 +37,12 @@
                         <th class="sticky">{{'goal'| translate}}</th>
                         <th class="sticky">{{'kras'| translate}}</th>
                         <th class="sticky">{{'indicators'| translate}}</th>
-                        <th class="center sticky" ng-repeat="header in model.dataHeaders" ng-if="header.hasResultData">
+                        <th class="sticky" ng-repeat="header in model.dataHeaders" ng-if="header.hasResultData">
                             {{model.metaData.items[header.dimensionId].name}}
                         </th>
                     </tr>
                 </thead>
-                <tbody ng-include="'views/report-data/result-body.html'"></tbody>
+                <tbody ng-include="'views/report-data/result-body-vision.html'"></tbody>
             </table>
         </div>
     </div>

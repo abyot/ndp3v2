@@ -7,7 +7,6 @@ ndpFramework.controller('PolicyController',
         $translate,
         $modal,
         $filter,
-        NotificationService,
         SelectedMenuService,
         MetaDataFactory,
         OrgUnitFactory,
@@ -154,6 +153,7 @@ ndpFramework.controller('PolicyController',
         modalInstance.result.then(function ( selectedOu ) {
             if( selectedOu && selectedOu.id ){
                 $scope.selectedOrgUnit = selectedOu;
+                $scope.resetData();
             }
         });
     };

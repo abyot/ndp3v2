@@ -145,53 +145,6 @@
         "children": []
     },
     {
-        "id": "IL",
-        "domain": "IL",
-        "order": 5,
-        "displayName": "institutional_results",
-        "hasChildren": true,
-        "show": true,
-        "color": "il-menu",
-        "children": [
-            {
-                "id": "MDA",
-                "domain": "MDA",
-                "code": "MDA",
-                "displayName": "mdas",
-                "order": 1,
-                "children": [],
-                "view": "components/mda/mda-status.html",
-                "color": "il-menu"
-            },
-            {
-                "id": "LOG",
-                "domain": "LOG",
-                "code": "LOG",
-                "displayName": "lgs",
-                "order": 2,
-                "children": [],
-                "view": "components/log/log-status.html",
-                "color": "il-menu"
-            },
-            {
-                "id": "LLG",
-                "domain": "LLG",
-                "code": "LLG",
-                "displayName": "llgs",
-                "order": 3,
-                "color": "il-menu",
-                "children": [],
-                "view": "components/llg/llg-status.html"
-            }
-        ]
-    },
-    {
-        "id": "SPACE",
-        "displayName": "space",
-        "order": 6,
-        "children": []
-    },
-    {
         "id": "SDG",
         "domain": "SDG",
         "code": "sdgGoals",

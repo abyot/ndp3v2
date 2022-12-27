@@ -16,7 +16,6 @@ ndpFramework.controller('OutputController',
         OptionComboService,
         ResulstChainService,
         CommonUtils,
-        DashboardService,
         Analytics) {
 
     $scope.model = {
@@ -167,12 +166,12 @@ ndpFramework.controller('OutputController',
 
     MetaDataFactory.getAll('legendSets').then(function(legendSets){
 
-        angular.forEach(legendSets, function(legendSet){
+        /*angular.forEach(legendSets, function(legendSet){
             if ( legendSet.isTrafficLight ){
                 $scope.model.defaultLegendSet = legendSet;
             }
             $scope.model.legendSetsById[legendSet.id] = legendSet;
-        });
+        });*/
 
         MetaDataFactory.getAll('optionSets').then(function(optionSets){
 
@@ -202,29 +201,18 @@ ndpFramework.controller('OutputController',
                 $scope.model.piapObjectives = $scope.model.resultsFrameworkChain.objectives;
                 $scope.model.interventions = $scope.model.resultsFrameworkChain.interventions;
 
-                OptionComboService.getBtaDimensions().then(function( bta ){
+                OptionComboService.getBtaDimensions().then(function( response ){
 
-                    if( !bta || !bta.category || !bta.options || bta.options.length !== 3 ){
+                    if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
                         NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
                         return;
                     }
 
-                    $scope.model.bta = bta;
+                    $scope.model.bta = response.bta;
                     $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
-                    $scope.model.actualDimension = null;
-                    $scope.model.targetDimension = null;
-                    $scope.model.baselineDimension = null;
-                    angular.forEach(bta.options, function(op){
-                        if ( op.btaDimensionType === 'actual' ){
-                            $scope.model.actualDimension = op;
-                        }
-                        if ( op.btaDimensionType === 'target' ){
-                            $scope.model.targetDimension = op;
-                        }
-                        if ( op.btaDimensionType === 'baseline' ){
-                            $scope.model.baselineDimension = op;
-                        }
-                    });
+                    $scope.model.actualDimension = response.actual;
+                    $scope.model.targetDimension = response.target;
+                    $scope.model.baselineDimension = response.baseline;
 
                     var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
                     $scope.model.allPeriods = angular.copy( periods );
@@ -372,6 +360,11 @@ ndpFramework.controller('OutputController',
                                 });
                             });
 
+                            $scope.model.dataElementGroupsById = $scope.model.dataElementGroup.reduce( function(map, obj){
+                                map[obj.id] = obj;
+                                return map;
+                            }, {});
+
                             var des = [];
                             angular.forEach($scope.model.dataElementGroup, function(deg){
                                 des.push('DE_GROUP-' + deg.id);
@@ -399,6 +392,7 @@ ndpFramework.controller('OutputController',
                                         basePeriod: $scope.model.basePeriod,
                                         maxPeriod: $scope.model.selectedPeriods.slice(-1)[0],
                                         allPeriods: $scope.model.allPeriods,
+                                        dataElementGroupsById: $scope.model.dataElementGroupsById,
                                         dataElementsById: $scope.model.dataElementsById,
                                         legendSetsById: $scope.model.legendSetsById,
                                         defaultLegendSet: $scope.model.defaultLegendSet,
@@ -420,6 +414,8 @@ ndpFramework.controller('OutputController',
                                     $scope.model.denominator = processedData.completenessDen;
                                     $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
                                     $scope.model.performanceOverviewData = processedData.performanceOverviewData;
+                                    $scope.model.tableRows = processedData.tableRows;
+                                    $scope.model.povTableRows = processedData.povTableRows;
                                 }
                             });
                         }

@@ -673,13 +673,13 @@ var d2Services = angular.module('d2Services', ['ngResource'])
         },
         getPerformanceOverviewHeaders: function(){
 
-            var ac = { id: 'A', name: $translate.instant('achieved') + '  ( >= 100%)', lRange:  100, printStyle: 'green-background', style: {"background-color": '#339D73 !important', "color": '#000'} };
+            var ac = { order: 1, id: 'A', name: $translate.instant('achieved') + '  (>= 100%)', lRange:  100, printStyle: 'green-background', style: {"background-color": '#339D73 !important', "color": '#000'} };
 
-            var ma = { id: 'M', name: $translate.instant('moderately_achieved') + '  ( 75% - 99% )', lRange: 75, hRange: 99, printStyle: 'yellow-background', style: {"background-color": '#F4CD4D !important', "color": '#000'} };
+            var ma = { order: 2, id: 'M', name: $translate.instant('moderately_achieved') + '  (75-99%)', lRange: 75, hRange: 99, printStyle: 'yellow-background', style: {"background-color": '#F4CD4D !important', "color": '#000'} };
 
-            var na = { id: 'N', name: $translate.instant('not_achieved') + '  ( < 75% )', hRange: 74, printStyle: 'red-background', style: {"background-color": '#CD615A !important', "color": '#000'} };
+            var na = { order: 3, id: 'N', name: $translate.instant('not_achieved') + '  (<75%)', hRange: 74, printStyle: 'red-background', style: {"background-color": '#CD615A !important', "color": '#000'} };
 
-            var nd = { id: 'X', name: $translate.instant('no_data'), printStyle: 'grey-background', style: {"background-color": '#aaa !important', "color": '#000'}};
+            var nd = { order: 4, id: 'X', name: $translate.instant('no_data'), printStyle: 'grey-background', style: {"background-color": '#aaa !important', "color": '#000'}};
 
             //var al = { id: 'All', name: $translate.instant('weighted_score'), style: {"background-color": '#fff !important', "color": '#000'}};
 

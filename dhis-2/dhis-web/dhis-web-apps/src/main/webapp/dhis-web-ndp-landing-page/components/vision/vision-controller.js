@@ -65,20 +65,20 @@ ndpFramework.controller('VisionController',
 
     dhis2.ndp.downloadGroupSets( 'vision2040' ).then(function(){
 
-        OptionComboService.getBtaDimensions().then(function( bta ){
+        OptionComboService.getBtaDimensions().then(function( response ){
 
-            if( !bta || !bta.category || !bta.options || bta.options.length !== 3 ){
+            if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
                 NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
                 return;
             }
 
-            $scope.model.bta = bta;
-            $scope.model.targetDimension = $.map($scope.model.bta.options, function(d){
-                if( d.btaDimensionType === 'target' ){
-                    return d;
-                }
-            });
-
+            $scope.model.bta = response.bta;
+            $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
+            $scope.model.actualDimension = response.actual;
+            $scope.model.targetDimension = response.target;
+            $scope.model.baselineDimension = response.baseline;
+                    
+  
             MetaDataFactory.getAll('categoryCombos').then(function(ccs){
                 angular.forEach(ccs, function(cc){
                     $scope.model.categoryCombosById[cc.id] = cc;

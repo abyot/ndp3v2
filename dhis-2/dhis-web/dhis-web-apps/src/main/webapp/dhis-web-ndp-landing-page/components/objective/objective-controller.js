@@ -16,7 +16,6 @@ ndpFramework.controller('ObjectiveController',
         OrgUnitFactory,
         OptionComboService,
         Analytics,
-        DashboardService,
         CommonUtils,
         FinancialDataService,
         DataValueService) {
@@ -145,29 +144,18 @@ ndpFramework.controller('ObjectiveController',
 
     dhis2.ndp.downloadGroupSets( 'resultsFrameworkObjective' ).then(function(){
 
-        OptionComboService.getBtaDimensions().then(function( bta ){
+        OptionComboService.getBtaDimensions().then(function( response ){
 
-            if( !bta || !bta.category || !bta.options || bta.options.length !== 3 ){
+            if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
                 NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
                 return;
             }
 
-            $scope.model.bta = bta;
+            $scope.model.bta = response.bta;
             $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
-            $scope.model.actualDimension = null;
-            $scope.model.targetDimension = null;
-            $scope.model.baselineDimension = null;
-            angular.forEach(bta.options, function(op){
-                if ( op.btaDimensionType === 'actual' ){
-                    $scope.model.actualDimension = op;
-                }
-                if ( op.btaDimensionType === 'target' ){
-                    $scope.model.targetDimension = op;
-                }
-                if ( op.btaDimensionType === 'baseline' ){
-                    $scope.model.baselineDimension = op;
-                }
-            });
+            $scope.model.actualDimension = response.actual;
+            $scope.model.targetDimension = response.target;
+            $scope.model.baselineDimension = response.baseline;
 
             MetaDataFactory.getAll('dataElements').then(function(dataElements){
 
@@ -209,17 +197,6 @@ ndpFramework.controller('ObjectiveController',
                             $scope.model.metaDataCached = true;
                             $scope.populateMenu();
                             $scope.model.performanceOverviewLegends = CommonUtils.getPerformanceOverviewHeaders();
-                            /*$scope.model.dashboardFetched = true;
-                            $scope.model.dashboardName = 'Objectives';
-                            DashboardService.getByName( $scope.model.dashboardName ).then(function( result ){
-                                $scope.model.dashboardItems = result.dashboardItems;
-                                $scope.model.charts = result.charts;
-                                $scope.model.tables = result.tables;
-                                $scope.model.maps = result.maps;
-                                $scope.model.dashboardFetched = true;
-
-                                $scope.populateMenu();
-                            });*/
                         });
                     });
                 });
@@ -312,7 +289,13 @@ ndpFramework.controller('ObjectiveController',
                 });
             });
 
+            $scope.model.dataElementGroupsById = $scope.model.dataElementGroup.reduce( function(map, obj){
+                map[obj.id] = obj;
+                return map;
+            }, {});
+
             var des = [];
+            $scope.model.theRows = [];
             angular.forEach($scope.model.dataElementGroup, function(deg){
                 des.push('DE_GROUP-' + deg.id);
             });
@@ -344,6 +327,7 @@ ndpFramework.controller('ObjectiveController',
                             actualDimension: $scope.model.actualDimension,
                             maxPeriod: $scope.model.selectedPeriods.slice(-1)[0],
                             allPeriods: $scope.model.allPeriods,
+                            dataElementGroupsById: $scope.model.dataElementGroupsById,
                             dataElementsById: $scope.model.dataElementsById,
                             cost: $scope.model.cost,
                             displayVision2040: true,
@@ -367,6 +351,8 @@ ndpFramework.controller('ObjectiveController',
                         $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
                         $scope.model.performanceOverviewData = processedData.performanceOverviewData;
                         $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
+                        $scope.model.tableRows = processedData.tableRows;
+                        $scope.model.povTableRows = processedData.povTableRows;
                     }
                 });
             });
