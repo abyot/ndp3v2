@@ -345,23 +345,19 @@ ndpFramework.controller('IntermediateOutcomeController',
                         dataElementsById: $scope.model.dataElementsById,
                         legendSetsById: $scope.model.legendSetsById,
                         defaultLegendSet: $scope.model.defaultLegendSet,
-                        performanceOverviewHeaders: $scope.model.performanceOverviewHeaders
+                        performanceOverviewHeaders: $scope.model.performanceOverviewHeaders,
+                        displayActionBudgetData: false
                     };
 
                     var processedData = Analytics.processData( dataParams );
-
                     $scope.model.dataHeaders = processedData.dataHeaders;
                     $scope.model.reportPeriods = processedData.reportPeriods;
                     $scope.model.dataExists = processedData.dataExists;
-                    $scope.model.resultData = processedData.resultData || [];
-                    $scope.model.physicalPerformanceData = processedData.physicalPerformanceData || [];
-                    $scope.model.performanceData = processedData.performanceData || [];
-                    $scope.model.cumulativeData = processedData.cumulativeData || [];
+                    $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
                     $scope.model.hasPhysicalPerformanceData = processedData.hasPhysicalPerformanceData;
                     $scope.model.numerator = processedData.completenessNum;
                     $scope.model.denominator = processedData.completenessDen;
-                    $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
-                    $scope.model.performanceOverviewData = processedData.performanceOverviewData;
+                    $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
                     $scope.model.tableRows = processedData.tableRows;
                     $scope.model.povTableRows = processedData.povTableRows;
                 }

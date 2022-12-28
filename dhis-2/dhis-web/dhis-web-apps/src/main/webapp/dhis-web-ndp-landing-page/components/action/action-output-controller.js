@@ -46,8 +46,8 @@ ndpFramework.controller('ActionOutputController',
     };
 
     $scope.model.horizontalMenus = [
-        {id: 'result', title: 'targets', order: 1, view: 'components/action/results.html', active: true, class: 'main-horizontal-menu'},
-        {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/action/physical-performance.html', class: 'main-horizontal-menu'},
+        {id: 'financialPerformance', title: 'financial_performance', order: 1, view: 'components/action/financial-performance.html', class: 'main-horizontal-menu'},
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 2, view: 'components/action/cluster-performance.html', class: 'main-horizontal-menu'},
         {id: 'completeness', title: 'completeness', order: 3, view: 'components/action/completeness.html', class: 'main-horizontal-menu'}
     ];
 
@@ -194,8 +194,6 @@ ndpFramework.controller('ActionOutputController',
 
                     OptionComboService.getBtaAndBsrDimensions().then(function( response ){
                         
-                        console.log('bta_bsr:  ', response );
-
                         if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
                             NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
                             return;
@@ -205,7 +203,7 @@ ndpFramework.controller('ActionOutputController',
                             NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bsr_dimensions"));
                             return;
                         }
-
+                        
                         $scope.model.bta = response.bta;
                         $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
                         $scope.model.actualDimension = response.actual;
@@ -236,7 +234,7 @@ ndpFramework.controller('ActionOutputController',
                                     $scope.model.allPeriods = angular.copy( periods );
                                     $scope.model.periods = periods;
 
-                                    var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
+                                    var selectedPeriodNames = ['2020/21'];
 
                                     angular.forEach($scope.model.periods, function(pe){
                                         if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
@@ -391,21 +389,16 @@ ndpFramework.controller('ActionOutputController',
                     };
 
                     var processedData = Analytics.processData( dataParams );
-
                     $scope.model.dataHeaders = processedData.dataHeaders;
                     $scope.model.reportPeriods = processedData.reportPeriods;
                     $scope.model.dataExists = processedData.dataExists;
-                    $scope.model.resultData = processedData.resultData || [];
-                    $scope.model.physicalPerformanceData = processedData.physicalPerformanceData || [];
-                    $scope.model.performanceData = processedData.performanceData || [];
-                    $scope.model.cumulativeData = processedData.cumulativeData || [];
                     $scope.model.hasPhysicalPerformanceData = processedData.hasPhysicalPerformanceData;
+                    $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
                     $scope.model.numerator = processedData.completenessNum;
                     $scope.model.denominator = processedData.completenessDen;
-                    $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
+                    $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
                     $scope.model.tableRows = processedData.tableRows;
-                    
-                    console.log('dataHeaders:  ', processedData.dataHeaders);
+                    $scope.model.povTableRows = processedData.povTableRows;
                 }
             });
         }
@@ -487,6 +480,16 @@ ndpFramework.controller('ActionOutputController',
 
     $scope.getCoverage = function(numerator, denominator){
         return CommonUtils.getPercent(numerator, denominator, false);
+    };
+    
+    $scope.getBudgetPercentage = function( value, dimension){
+        if( !value || !dimension || !dimension.denDimensionId || !dimension.periodId ){
+            return;
+        }
+        
+        var num = value[dimension.numDimensionId + '.' + dimension.periodId];
+        var den = value[dimension.denDimensionId + '.' + dimension.periodId];        
+        return CommonUtils.getPercent(num, den, true);
     };
 
 });

@@ -965,72 +965,12 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             var baseLineTargetActualDimensions = $.map(dataParams.bta.options, function(d){return d.id;});
             var dataExists = false;
             var dataHeaders = [];
-            var performanceHeaders = orderByFilter( dataParams.reportPeriods, '-id').reverse();
             var performanceOverviewHeaders = dataParams.performanceOverviewHeaders;
-            var resultData = [];
-            var physicalPerformanceData = [];
-            var performanceData = [];
-            var performanceOverviewData = [];
-            var cumulativeData = [];
-            var costData = [];
-            var costEffData = [];
-            var redCells = 0, yellowCells = 0, greenCells = 0, totalRows = 0, dataElementRows = 0;
+            var totalRows = 0, dataElementRows = 0;
             var hasPhysicalPerformanceData = false;
             var dataElementRowIndex = {};
             var tableRows = [];
             var povTableRows = [];
-
-            var mergeBtaData = function( _data ){
-                var data = angular.copy( _data );
-                var res = {};
-                if ( data && data.length && data.length > 0 ){
-                    angular.forEach(data, function(r){
-                        for( var k in r ){
-                            if ( k === btaDimensions.category ){
-                                var dim = btaDimensions[r[k]];
-                                r[dim] = r.value;
-                                delete r.value;
-                                break;
-                            }
-                        }
-                        res = Object.assign( res, r );
-                    });
-                }
-                return res;
-            };
-
-            var getPreviousData = function( current, data ){
-                var previous = null;
-                var param = angular.copy( current );
-                delete param.target; delete param.actual; delete param.baseline; delete param[btaDimensions.category];
-                if ( current && current.pe && data ){
-                    var previousPeriod = PeriodService.getPreviousPeriod( current.pe, dataParams.allPeriods );
-                    if( previousPeriod && previousPeriod.period && previousPeriod.period.id ){
-                        param.pe = previousPeriod.period.id;
-                        var _d = $filter('dataFilter')(data, param);
-                        previous = mergeBtaData( _d, data );
-
-                        return previous;
-                    }
-                }
-
-                return previous;
-            };
-
-            var getPeriodData = function( period, current, data ){
-                var periodData = null;
-                var param = angular.copy( current );
-                delete param.target; delete param.actual; delete param.baseline; delete param[btaDimensions.category];
-                if ( current && current.pe && data && period && period.id ){
-                    param.pe = period.id;
-                    var _d = $filter('dataFilter')(data, param);
-                    periodData = mergeBtaData( _d, data );
-
-                    return periodData;
-                }
-
-                return periodData;
-            };
 
             var filterResultData = function(header, dataElement, oc, data ){
                 if(!header || !data || !header.periodId || !header.dimensionId || !dataElement) return;
@@ -1058,20 +998,54 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 var res = $filter('dataFilter')(data, filterParams)[0];
                 return res && res.value ? res.value : '';
             };
-
-            var filterCostData = function(header, dataElement, oc, data, reportParams){
+            
+            var filterBudgetData = function(header, dataElement, oc, data ){
                 if(!header || !data || !header.periodId || !header.dimensionId || !dataElement) return;
 
+                var filterParams = {
+                    dx: dataElement,
+                    pe: header.periodId,
+                    co: oc
+                };
+
+                filterParams[dataParams.bsr.category] = header.dimensionId;
+                var res = $filter('dataFilter')(data, filterParams)[0];
+                return res && res.value ? res.value : '';
+            };
+            
+            var filterBudgetValueData = function(header, dataElement, oc, data ){
+                if(!header || !header.periodId || !dataElement || !oc || !data) return;
+                var filterParams = {
+                    dx: dataElement,
+                    pe: header.periodId,
+                    co: oc
+                };
+                filterParams[dataParams.bsr.category] = dataParams.budgetDimension.id;
+
+                var res = $filter('dataFilter')(data, filterParams)[0];
+                return res && res.value ? res.value : '';
+            };
+            
+            var valueExists = function(data, header, dataElement, isActionData ){
+                if(!header || !data || !header.periodId || !header.dimensionId || !dataElement) {
+                    return false;
+                }
                 var filterParams = {
                     dx: dataElement,
                     pe: header.periodId
                 };
 
-                //filterParams[reportParams.bta.category] = header.dimensionId;
-                var res = $filter('dataFilter')(data, filterParams)[0];
-                return res && res.value ? res.value : '';
-            };
+                if ( isActionData ){
+                    filterParams[dataParams.bsr.category] = header.dimensionId;
+                }
+                else {
+                    filterParams[dataParams.bta.category] = header.dimensionId;
+                }
 
+                var res = $filter('dataFilter')(data, filterParams)[0];
+                return res && res.value ? true : false;
+            };
+            
             var extractRange = function( l ){
                 var ranges = {
                     red: null,
@@ -1164,108 +1138,6 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 return style;
             };
 
-            var getPerforAndCostData = function(header, dataElement, oc, data, reportParams){
-                if(!header || !data || !header.id || !dataElement) return;
-
-                var filterParams = {
-                    dx: dataElement,
-                    pe: header.id,
-                    co: oc
-                };
-
-                var rs = $filter('dataFilter')(data, filterParams);
-                var currentData = mergeBtaData( rs );
-                var previousData = getPreviousData( currentData, data );
-
-                var p = $translate.instant("no_target"), c = '', e = '';
-
-                if ( previousData ){
-                    p = CommonUtils.getPercent( currentData.actual - previousData.actual, currentData.target - previousData.actual );
-                }
-
-                var de = reportParams.dataElementsById[dataElement];
-
-                if ( de && de.coaCode ){
-                    var outCome = $filter('getFirst')(reportParams.cost.outCome, {code: de.coaCode}, true);
-                    var filterParams = {
-                        period: header.id
-                    };
-
-                    var costs = $filter('dataFilter')(outCome.costs, filterParams);
-
-                    c = CommonUtils.getTotal( costs, 'value' );
-
-                    if ( previousData ){
-                        e = CommonUtils.getPercent( currentData.actual - previousData.actual, c, true );
-                    }
-                }
-
-                return {performance: p, cost: c, costEff: e};
-            };
-
-            var filterCumulativeData = function(header, dataElement, oc, data, reportParams){
-                if(!header || !data || !header.id || !dataElement || !reportParams) return;
-
-                var filterParams = {
-                    dx: dataElement,
-                    pe: header.id,
-                    co: oc
-                };
-
-                if ( !reportParams.basePeriod || !reportParams.maxPeriod ){
-                    $translate.instant("invalid_period");
-                }
-
-                var rs = $filter('dataFilter')(data, filterParams);
-                var currentData = mergeBtaData( rs );
-                var baseData = getPeriodData( reportParams.basePeriod, currentData, data );
-                var maxData = getPeriodData( reportParams.maxPeriod, currentData, data );
-
-
-                if ( baseData && maxData ){
-                    return CommonUtils.getPercent( currentData.actual - baseData.actual, maxData.target - baseData.actual );
-                }
-                else{
-                    return $translate.instant("no_target");
-                }
-            };
-
-            var valueExists = function(data, header, dataElement){
-                if(!header || !data || !header.periodId || !header.dimensionId || !dataElement) {
-                    return false;
-                }
-                var filterParams = {
-                    dx: dataElement,
-                    pe: header.periodId
-                };
-
-                filterParams[dataParams.bta.category] = header.dimensionId;
-                var res = $filter('dataFilter')(data, filterParams)[0];
-                return res && res.value ? true : false;
-            };
-
-            var getPerformanceOverviewStyle = function( v, size, x ){
-                if( !v || isNaN(v) ){
-                    return;
-                }
-                var color = '';
-                if ( size && x && size === x ){
-                    return {"background-color": '#aaa'};
-                }
-
-                if( v >= 3 ){
-                    color = '#339D73';
-                }
-                else if ( v>=2.25 && v<=2.99 ){
-                    color = '#F4CD4D';
-                }
-                else{
-                    color = '#CD615A';
-                }
-
-                return {"background-color": color};
-            };
-
             angular.forEach(reportPeriods, function(pe){
                 var colSpan = 0;
                 var d = $filter('filter')(data, {pe: pe.id});
@@ -1276,56 +1148,52 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 pe.hasData = d && d.length > 0;
                 pe.hasTargetData = targetData && targetData.length > 0;
 
-                /*if (dataParams.displayActionData)
-                {
-                    if ( pe.hasData ){
-                        colSpan++;
-                        dataHeaders.push({
-                            hasResultData: true,
-                            periodId: pe.id,
-                            periodStart: pe.startDate,
-                            periodEnd: pe.endDate,
-                            dimensionId: 'budget',
-                            name: $translate.instant("budget"),
-                            dimension: 'budget'});
-                    }
-
-                }
-                else if ( dataParams.displayActionBudgetData )
-                {
-                    if ( pe.hasData ){
-                        colSpan++;
-                        dataHeaders.push({
-                            hasResultData: true,
-                            periodId: pe.id,
-                            periodStart: pe.startDate,
-                            periodEnd: pe.endDate,
-                            dimensionId: 'budget',
-                            name: $translate.instant("budget"),
-                            dimension: 'budget'});
-                    }
-                }*/
                 if ( dataParams.displayActionBudgetData ){
-                    var budgetSpentReleaseDimensions = $.map(dataParams.bsr.options, function(d){return d.id;});
-                    
-                    angular.forEach(budgetSpentReleaseDimensions, function(dm){
-                        var filterParams = {pe: pe.id};
-                        filterParams[dataParams.bsr.category] = dm;
-                        var d = $filter('dataFilter')(data, filterParams);
-                        if( d && d.length > 0 ){
-                            if (dataParams.displayActionData && dataParams.targetDimension && dataParams.targetDimension.id !== dm )
-                            {
-                                return;
-                            }
-                            colSpan++;
-                            dataHeaders.push({
-                                periodId: pe.id,
-                                periodStart: pe.startDate,
-                                periodEnd: pe.endDate,
-                                dimensionId: dm,
-                                dimension: dataParams.bta.category});
-                        }
+                    angular.forEach(dataParams.bsr.options, function(op){
+                        colSpan++;
+                        dataHeaders.push({
+                            name: op.displayName + ' ' + $translate.instant('ugx_billion'),
+                            isRowData: true,
+                            periodId: pe.id,
+                            periodStart: pe.startDate,
+                            periodEnd: pe.endDate,
+                            dimensionId: op.id,
+                            dimension: dataParams.bsr.category});
                     });
+                    
+                    //budget-release-spent-percentage headers
+                    colSpan++;
+                    dataHeaders.push({
+                        name: $translate.instant('budget_released'),
+                        isRowData: false,
+                        periodId: pe.id,
+                        periodStart: pe.startDate,
+                        periodEnd: pe.endDate,
+                        denDimensionId: dataParams.budgetDimension.id,
+                        numDimensionId: dataParams.releaseDimension.id,
+                        dimension: dataParams.bsr.category});
+                    
+                    colSpan++;
+                    dataHeaders.push({
+                        name: $translate.instant('budget_spent'),
+                        isRowData: false,
+                        periodId: pe.id,
+                        periodStart: pe.startDate,
+                        periodEnd: pe.endDate,
+                        denDimensionId: dataParams.budgetDimension.id,
+                        numDimensionId: dataParams.spentDimension.id,
+                        dimension: dataParams.bsr.category});
+                    
+                    colSpan++;
+                    dataHeaders.push({
+                        name: $translate.instant('release_spent'),
+                        isRowData: false,
+                        periodId: pe.id,
+                        periodStart: pe.startDate,
+                        periodEnd: pe.endDate,
+                        denDimensionId: dataParams.releaseDimension.id,
+                        numDimensionId: dataParams.spentDimension.id,
+                        dimension: dataParams.bsr.category});
                 }
                 else{
                     angular.forEach(baseLineTargetActualDimensions, function(dm){
@@ -1333,10 +1201,6 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                         filterParams[dataParams.bta.category] = dm;
                         var d = $filter('dataFilter')(data, filterParams);
                         if( d && d.length > 0 ){
-                            if (dataParams.displayActionData && dataParams.targetDimension && dataParams.targetDimension.id !== dm )
-                            {
-                                return;
-                            }
                             colSpan++;
                             dataHeaders.push({
                                 periodId: pe.id,
@@ -1346,9 +1210,6 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 dimension: dataParams.bta.category});
                         }
                     });
-                }
-                if ( dataParams.performanceOverviewHeaders ){
-
                 }
                 if ( pe.hasData) {
                     pe.colSpan = colSpan;
@@ -1359,344 +1220,14 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 dataExists = false;
             }
             else{
-                dataExists = true;
-                resultData = [];
-                performanceData = [];
-                costData = [];
-                var resultRow = [], parsedResultRow = [],
-                    physicalPerformanceRow = [], parsedPhysicalPerformanceRow = [],
-                    performanceRow = [], parsedPerformanceRow = [],
-                    performanceOverviewRow = [], performanceOverviewPercentageRow = [], parsedPerformanceOverviewRow = [],
-                    cumulativeRow = [], parsedCumulativeRow = [],
-                    costRow = [], parsedCostRow = [],
-                    costEffRow = [], parsedCostEffRow = [],
-                    actionCost = {}, completenessNum = 0, completenessDen = 0;
+                dataExists = true;            
+                var completenessNum = 0, completenessDen = 0;
 
                 angular.forEach(dataParams.selectedDataElementGroupSets, function(degs){
                     degs.expected = {};
                     degs.available = {};
-                    /*var groupSet = {val: degs.displayName, span: 0, pSpan: 0};
-                    var addLeadingRow = function(){
-                        resultRow.push(groupSet);
-                        physicalPerformanceRow.push(groupSet);
-                        performanceRow.push(groupSet);
-                        performanceOverviewRow.push(groupSet);
-                        cumulativeRow.push(groupSet);
-                        costRow.push(groupSet);
-                        costEffRow.push(groupSet);
-                    };
-                    var generateRow = function(group, deg){
-                        groupSet.pSpan +=2;
-                        if( deg && deg.dataElements && deg.dataElements.length > 0 ){
-                            var index = 0;
-                            var pov = {};
-                            angular.forEach(deg.dataElements, function(de){
-                                index++;
-                                angular.forEach(de.categoryOptionCombos, function(oc){
-                                    groupSet.span++;
-                                    group.span++;
-                                    dataElementRows++;
-                                    var name = dataParams.dataElementsById && dataParams.dataElementsById[de.id] ? dataParams.dataElementsById[de.id].displayName : 'not-found';
-                                    if( de.categoryOptionCombos.length > 1 ){
-                                        name = name + " - " + oc.displayName;
-                                    }
 
-                                    //Result data
-                                    resultRow.push({val: name , span: 1, info: de.id});
-                                    physicalPerformanceRow.push({val: name , span: 1, info: de.id});
-                                    angular.forEach(dataHeaders, function(dh){
-                                        var period = {
-                                            id: dh.periodId,
-                                            startDate: dh.periodStart,
-                                            endDate: dh.periodEnd
-                                        };
-
-                                        if ( dh.dimensionId === 'unitCost' )
-                                        {
-                                            resultRow.push({val: '', span: 1, period: period, coc: oc, aoc: dh.dimensionId});
-                                        }
-
-                                        if ( dh.dimensionId === 'budget' )
-                                        {
-                                            dh.hasResultData = true;
-                                            resultRow.push({val: filterCostData(dh, de.id, oc.id, data), span: 1, details: de.id, period: period, coc: oc, aoc: 'default'});
-                                        }
-
-                                        if (dataParams.displayActionData && dataParams.targetDimension && dataParams.targetDimension.id !== dh.dimensionId )
-                                        {
-                                            return;
-                                        }
-
-                                        var val = filterResultData(dh, de.id, oc.id, data);
-                                        if ( dh.dimensionId === dataParams.targetDimension.id )
-                                        {
-                                            dh.hasResultData = true;
-                                            resultRow.push({val: val, span: 1, details: de.id, period: period, coc: oc, aoc: dh.dimensionId});
-                                        }
-
-                                        var trafficLight = "";
-
-                                        if( dh.dimensionId === dataParams.actualDimension.id ){
-                                            var targetValue = filterTargetData(dh, de.id, oc.id, data);
-                                            trafficLight = getTrafficLight(val, targetValue, de.id, dh.dimensionId);
-                                        }
-
-                                        physicalPerformanceRow.push({val: val, span: 1, trafficLight: trafficLight.inlineStyle ? trafficLight.inlineStyle : '', printStyle:  trafficLight.printStyle ? trafficLight.printStyle : '', details: de.id, period: period, coc: oc, aoc: dh.dimensionId});
-
-                                        if ( dh.dimensionId === dataParams.actualDimension.id ){
-                                            var ah = angular.copy(dh);
-                                            ah.dimensionId = dataParams.actualDimension.id;
-                                            var th = angular.copy(dh);
-                                            th.dimensionId = dataParams.targetDimension.id;
-                                            var av = filterResultData(ah, de.id, oc.id, data);
-                                            var tv = filterTargetData(th, de.id, oc.id, data);
-
-                                            if ( !pov[deg.id + '-' + 'A-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'A-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !pov[deg.id + '-' + 'M-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'M-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !pov[deg.id + '-' + 'N-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'N-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !pov[deg.id + '-' + 'X-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'X-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !av || !tv ){
-                                                pov[deg.id + '-' + 'X-' + dh.periodId] +=1;
-                                            }
-                                            else{
-                                                var t = CommonUtils.getPercent( av, tv, true, true);
-                                                if (t >= 100){
-                                                    pov[deg.id + '-' + 'A-' + dh.periodId] +=1;
-                                                }
-                                                else if ( t>=75 && t<=99 ){
-                                                    pov[deg.id + '-' + 'M-' + dh.periodId] +=1;
-                                                }
-                                                else {
-                                                    pov[deg.id + '-' + 'N-' + dh.periodId] +=1;
-                                                }
-                                            }
-
-                                            pov[deg.id + '-' + 'All-' + dh.periodId] = ((pov[deg.id + '-' + 'A-' + dh.periodId]*3 + pov[deg.id + '-' + 'M-' + dh.periodId]*2 + pov[deg.id + '-' + 'N-' + dh.periodId]*1) / deg.dataElements.length).toFixed(2);
-                                        }
-                                    });
-
-                                    if ( dataParams.displayVision2040 && dataParams.dataElementsById[de.id] ){
-                                        resultRow.push({vision2040: dataParams.dataElementsById[de.id].vision2040});
-                                        physicalPerformanceRow.push({vision2040: dataParams.dataElementsById[de.id].vision2040});
-                                    }
-                                    parsedResultRow.push(resultRow);
-                                    resultRow = [];
-
-                                    parsedPhysicalPerformanceRow.push(physicalPerformanceRow);
-                                    physicalPerformanceRow = [];
-
-                                    //Action data
-                                    var actions = dataParams.actionsByDataElement && dataParams.actionsByDataElement[de.id] ? dataParams.actionsByDataElement[de.id] : [];
-                                    if ( dataParams.displayActionData && actions && actions.length > 0 ){
-                                        actions = orderByFilter( actions, '-code').reverse();
-                                        angular.forEach(actions, function(action){
-                                            groupSet.span++;
-                                            group.span++;
-                                            if( !actionCost[action.id] ){
-                                                actionCost[action.id] = {};
-                                            }
-                                            resultRow.push({action: action.displayName, span: 1, style: 'green-background'});
-                                            angular.forEach(dataHeaders, function(dh){
-                                                var period = {
-                                                    id: dh.periodId,
-                                                    startDate: dh.periodStart,
-                                                    endDate: dh.periodEnd
-                                                };
-
-                                                if ( dh.dimensionId === 'unitCost' )
-                                                {
-                                                    resultRow.push({val: '', span: 1, period: period, coc: oc, aoc: dh.dimensionId, style: 'green-background'});
-                                                }
-
-                                                if ( dh.dimensionId === 'budget' )
-                                                {
-                                                    resultRow.push({val: '', span: 1, period: period, coc: oc, aoc: dh.dimensionId, style: 'green-background'});
-                                                }
-
-                                                if (dataParams.displayActionData && dataParams.targetDimension && dataParams.targetDimension.id !== dh.dimensionId )
-                                                {
-                                                    return;
-                                                }
-                                                resultRow.push({actionId: action.id, span: 1, period: period, coc: oc, aoc: dh.dimensionId, style: 'green-background'});
-                                            });
-                                            parsedResultRow.push(resultRow);
-                                            resultRow = [];
-
-                                            if( action.dataElements && action.dataElements.length > 0 ){
-                                                angular.forEach(action.dataElements, function(item){
-                                                    groupSet.span++;
-                                                    group.span++;
-
-                                                    resultRow.push({item: item.displayName, span: 1, style: 'yellow-background'});
-                                                    angular.forEach(dataHeaders, function(dh){
-                                                        var period = {
-                                                            id: dh.periodId,
-                                                            startDate: dh.periodStart,
-                                                            endDate: dh.periodEnd
-                                                        };
-
-                                                        var unitCost = filterCostData(dh, item.id, oc.id, dataParams.actionData, dataParams);
-
-                                                        if ( dh.dimensionId === 'unitCost' )
-                                                        {
-                                                            resultRow.push({val: CommonUtils.formatNumber(unitCost), span: 1, period: period, coc: oc, aoc: dh.dimensionId, style: 'red-background'});
-                                                        }
-
-                                                        if ( dh.dimensionId === 'budget')
-                                                        {
-                                                            resultRow.push({val: CommonUtils.formatNumber(unitCost), span: 1, period: period, coc: oc, aoc: dh.dimensionId, style: 'red-background'});
-                                                        }
-
-                                                        if (dataParams.displayActionData && dataParams.targetDimension && dataParams.targetDimension.id !== dh.dimensionId )
-                                                        {
-                                                            return;
-                                                        }
-
-                                                        var val = filterResultData(dh, de.id, oc.id, data);
-                                                        val = CommonUtils.getProduct(val, unitCost);
-                                                        if( !actionCost[action.id][dh.periodId] ){
-                                                            actionCost[action.id][dh.periodId] = 0;
-                                                        }
-                                                        actionCost[action.id][dh.periodId] += val;
-                                                        resultRow.push({val: CommonUtils.formatNumber(val), span: 1, period: period, coc: oc, aoc: dh.dimensionId, style: 'yellow-background'});
-                                                    });
-                                                    parsedResultRow.push(resultRow);
-                                                    resultRow = [];
-                                                });
-                                            }
-
-                                        });
-
-                                        //Cost per output
-                                        groupSet.span++;
-                                        group.span++;
-                                        resultRow.push({totalOutputCost: $translate.instant('total_cost_per_output') , span: 1, style: 'blue-background'});
-                                        angular.forEach(dataHeaders, function(dh){
-                                            var period = {
-                                                id: dh.periodId,
-                                                startDate: dh.periodStart,
-                                                endDate: dh.periodEnd
-                                            };
-
-                                            if ( dh.dimensionId === 'unitCost' )
-                                            {
-                                                resultRow.push({val: '', span: 1, period: period, coc: oc, aoc: dh.dimensionId, style: 'blue-background'});
-                                            }
-
-                                            if (dataParams.displayActionData && dataParams.targetDimension && dataParams.targetDimension.id !== dh.dimensionId )
-                                            {
-                                                return;
-                                            }
-
-                                            var totalCost = 0;
-                                            angular.forEach(actions, function(action){
-                                                var ac = actionCost[action.id][dh.periodId];
-                                                if ( dhis2.validation.isNumber( ac ) ){
-                                                    totalCost += ac;
-                                                    actionCost[action.id][dh.periodId] = CommonUtils.formatNumber( ac );
-                                                }
-                                            });
-
-                                            resultRow.push({val: CommonUtils.formatNumber( totalCost ), span: 1, style: 'blue-background'});
-                                        });
-
-                                        parsedResultRow.push(resultRow);
-                                        resultRow = [];
-                                    }
-
-                                    // Performance overview data
-                                    if ( index === deg.dataElements.length ){
-                                        group.pSpan = 2;
-                                        performanceOverviewRow.push({val: deg.dataElements.length, pSpan: 2, info: deg.id});
-                                        angular.forEach(performanceOverviewHeaders, function(ph){
-                                            var v = pov[deg.id + '-' + ph.id + '-' + ph.period];
-                                            var x = pov[deg.id + '-X-' + ph.period];
-                                            var prcnt = CommonUtils.getPercent( v, deg.dataElements.length, true, true);
-                                            if( ph.id === 'All' ){
-                                                performanceOverviewRow.push({val: v, pSpan: 2, style: getPerformanceOverviewStyle(v, deg.dataElements.length, x)});
-                                                //performanceOverviewPercentageRow.push({val: v, pSpan: 1, style: getPerformanceOverviewStyle(v, deg.dataElements.length, x)});
-                                            }
-                                            else{
-                                                performanceOverviewRow.push({val: v, pSpan: 1});
-                                                performanceOverviewPercentageRow.push({val: prcnt, hasPercent: true, pSpan: 1});
-                                            }
-                                        });
-                                        parsedPerformanceOverviewRow.push(performanceOverviewRow);
-                                        parsedPerformanceOverviewRow.push(performanceOverviewPercentageRow);
-                                        performanceOverviewRow = [];
-                                        performanceOverviewPercentageRow = [];
-                                    }
-
-                                    //Performance, Cumulative, Cost and CostEff data
-                                    var r = {val: name , span: 1, info: de.id};
-                                    dataElementRowIndex[de.id] = dataElementRows;
-                                    performanceRow.push(r);
-                                    cumulativeRow.push(r);
-                                    costRow.push(r);
-                                    costEffRow.push(r);
-
-                                    angular.forEach(performanceHeaders, function(dh){
-                                        cumulativeRow.push({val: filterCumulativeData(dh, de.id, oc.id, data, dataParams), span: 1});
-                                        var pce = getPerforAndCostData(dh, de.id, oc.id, data, dataParams);
-                                        performanceRow.push({val: pce.performance, span: 1});
-                                        costRow.push({val: pce.cost, span: 1});
-                                        costEffRow.push({val: pce.costEff, span: 1});
-                                    });
-                                    parsedPerformanceRow.push(performanceRow);
-                                    performanceRow = [];
-                                    parsedCumulativeRow.push(cumulativeRow);
-                                    cumulativeRow = [];
-                                    parsedCostRow.push(costRow);
-                                    costRow = [];
-                                    parsedCostEffRow.push(costEffRow);
-                                    costEffRow = [];
-                                });
-                            });
-                        }
-                        else{
-                            generateEmptyRow( group );
-                        }
-                    };
-                    var generateEmptyRow = function( group ){
-                        groupSet.span++;
-                        if ( group ){
-                            group.span++;
-                        }
-
-                        //Result data
-                        resultRow.push({val: "" , span: 1, info: ""});
-                        physicalPerformanceRow.push({val: "" , span: 1, info: ""});
-                        angular.forEach(dataHeaders, function(dh){
-                            var period = {
-                                id: dh.periodId,
-                                startDate: dh.periodStart,
-                                endDate: dh.periodEnd
-                            };
-                            var val = "";
-                            var trafficLight = "";
-                            resultRow.push({val: val, span: 1, trafficLight: trafficLight, details: "", period: period, coc: "", aoc: dh.dimensionId});
-                            physicalPerformanceRow.push({val: val, span: 1, trafficLight: trafficLight, details: "", period: period, coc: "", aoc: dh.dimensionId});
-                        });
-                        parsedResultRow.push(resultRow);
-                        resultRow = [];
-
-                        parsedPhysicalPerformanceRow.push(physicalPerformanceRow);
-                        physicalPerformanceRow = [];
-                    };*/
-
-                    var generateCompletenessInfo = function( degs ){
+                    var generateCompletenessInfo = function( degs, isActionData ){
                         angular.forEach(degs.dataElementGroups, function(deg){
                             var _deg = $filter('filter')(dataParams.dataElementGroups, {id: deg.id})[0];
                             angular.forEach(_deg.dataElements, function(de){
@@ -1711,7 +1242,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
                                     degs.expected[id]++;
                                     completenessDen++;
-                                    if( valueExists(data, dh, de.id) ){
+                                    if( valueExists(data, dh, de.id, isActionData) ){
                                         degs.available[id]++;
                                         completenessNum++;
                                     }
@@ -1720,7 +1251,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                         });
                     };
 
-                    generateCompletenessInfo( degs );                    
+                    generateCompletenessInfo( degs, dataParams.displayActionBudgetData );                    
                     
                     angular.forEach(degs.dataElementGroups, function(_deg){
                         var deg = dataParams.dataElementGroupsById[_deg.id];
@@ -1731,6 +1262,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                             angular.forEach(deg.dataElements, function(de){
                                 angular.forEach(de.categoryOptionCombos, function(oc){
                                     deCount++;
+                                    dataElementRows++;
                                     var tableRow = {
                                         dataElementId: de.id,
                                         dataElement: de.displayName + (oc.displayName === 'default' ? '' : ' - ' + oc.displayName),
@@ -1741,65 +1273,81 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                     };
                                     tableRows.push( tableRow );
                                     
-                                    angular.forEach(dataHeaders, function(dh){                                    
-                                        var val = filterResultData(dh, de.id, oc.id, data);
-                                        if ( dh.dimensionId === dataParams.targetDimension.id )
-                                        {
-                                            dh.hasResultData = true;
+                                    angular.forEach(dataHeaders, function(dh){                                        
+                                        if ( dataParams.displayActionBudgetData ){
+                                            if ( dh.dimensionId === dataParams.budgetDimension.id )
+                                            {
+                                                dh.hasBudgetData = true;
+                                            }
+                                            
+                                            if ( dh.isRowData ){
+                                                var bVal = filterBudgetData(dh, de.id, oc.id, data);                                            
+                                                var trafficLight = "";
+                                                if( dh.dimensionId === dataParams.actualDimension.id ){
+                                                    var budgetValue = filterBudgetValueData(dh, de.id, oc.id, data);
+                                                    trafficLight = getTrafficLight(bVal, budgetValue, de.id, dh.dimensionId);
+                                                }                                            
+                                                tableRow.styles[dh.dimensionId + '.' + dh.periodId] = trafficLight;
+                                                tableRow.values[dh.dimensionId + '.' + dh.periodId] = bVal;
+                                            }
                                         }
+                                        else {
+                                            if ( dh.dimensionId === dataParams.targetDimension.id )
+                                            {
+                                                dh.hasResultData = true;
+                                            }
+                                            var val = filterResultData(dh, de.id, oc.id, data);
+                                            var trafficLight = "";
+                                            if( dh.dimensionId === dataParams.actualDimension.id ){
+                                                var targetValue = filterTargetData(dh, de.id, oc.id, data);
+                                                trafficLight = getTrafficLight(val, targetValue, de.id, dh.dimensionId);
+                                            }
+                                            tableRow.styles[dh.dimensionId + '.' + dh.periodId] = trafficLight;
+                                            tableRow.values[dh.dimensionId + '.' + dh.periodId] = val;
 
-                                        var trafficLight = "";
-                                        if( dh.dimensionId === dataParams.actualDimension.id ){
-                                            var targetValue = filterTargetData(dh, de.id, oc.id, data);
-                                            trafficLight = getTrafficLight(val, targetValue, de.id, dh.dimensionId);
+                                            if ( dh.dimensionId === dataParams.actualDimension.id ){
+                                                var ah = angular.copy(dh);
+                                                ah.dimensionId = dataParams.actualDimension.id;
+                                                var th = angular.copy(dh);
+                                                th.dimensionId = dataParams.targetDimension.id;
+                                                var av = filterResultData(ah, de.id, oc.id, data);
+                                                var tv = filterTargetData(th, de.id, oc.id, data);
+
+                                                if ( !pov[deg.id + '-' + 'A-' + dh.periodId] ){
+                                                    pov[deg.id + '-' + 'A-' + dh.periodId] = 0;
+                                                }
+
+                                                if ( !pov[deg.id + '-' + 'M-' + dh.periodId] ){
+                                                    pov[deg.id + '-' + 'M-' + dh.periodId] = 0;
+                                                }
+
+                                                if ( !pov[deg.id + '-' + 'N-' + dh.periodId] ){
+                                                    pov[deg.id + '-' + 'N-' + dh.periodId] = 0;
+                                                }
+
+                                                if ( !pov[deg.id + '-' + 'X-' + dh.periodId] ){
+                                                    pov[deg.id + '-' + 'X-' + dh.periodId] = 0;
+                                                }
+
+                                                if ( !av || !tv ){
+                                                    pov[deg.id + '-' + 'X-' + dh.periodId] +=1;
+                                                }
+                                                else{
+                                                    var t = CommonUtils.getPercent( av, tv, true, true);
+                                                    if (t >= 100){
+                                                        pov[deg.id + '-' + 'A-' + dh.periodId] +=1;
+                                                    }
+                                                    else if ( t>=75 && t<=99 ){
+                                                        pov[deg.id + '-' + 'M-' + dh.periodId] +=1;
+                                                    }
+                                                    else {
+                                                        pov[deg.id + '-' + 'N-' + dh.periodId] +=1;
+                                                    }
+                                                }
+                                            }                                            
                                         }
-                                        tableRow.styles[dh.dimensionId + '.' + dh.periodId] = trafficLight;
-                                        tableRow.values[dh.dimensionId + '.' + dh.periodId] = val;
-                                        
-                                        if ( dh.dimensionId === dataParams.actualDimension.id ){
-                                            var ah = angular.copy(dh);
-                                            ah.dimensionId = dataParams.actualDimension.id;
-                                            var th = angular.copy(dh);
-                                            th.dimensionId = dataParams.targetDimension.id;
-                                            var av = filterResultData(ah, de.id, oc.id, data);
-                                            var tv = filterTargetData(th, de.id, oc.id, data);
-
-                                            if ( !pov[deg.id + '-' + 'A-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'A-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !pov[deg.id + '-' + 'M-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'M-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !pov[deg.id + '-' + 'N-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'N-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !pov[deg.id + '-' + 'X-' + dh.periodId] ){
-                                                pov[deg.id + '-' + 'X-' + dh.periodId] = 0;
-                                            }
-
-                                            if ( !av || !tv ){
-                                                pov[deg.id + '-' + 'X-' + dh.periodId] +=1;
-                                            }
-                                            else{
-                                                var t = CommonUtils.getPercent( av, tv, true, true);
-                                                if (t >= 100){
-                                                    pov[deg.id + '-' + 'A-' + dh.periodId] +=1;
-                                                }
-                                                else if ( t>=75 && t<=99 ){
-                                                    pov[deg.id + '-' + 'M-' + dh.periodId] +=1;
-                                                }
-                                                else {
-                                                    pov[deg.id + '-' + 'N-' + dh.periodId] +=1;
-                                                }
-                                            }
-
-                                            //pov[deg.id + '-' + 'All-' + dh.periodId] = ((pov[deg.id + '-' + 'A-' + dh.periodId]*3 + pov[deg.id + '-' + 'M-' + dh.periodId]*2 + pov[deg.id + '-' + 'N-' + dh.periodId]*1) / deg.dataElements.length).toFixed(2);
-                                        }
-
                                     });
+                                    dataElementRowIndex[de.id] = dataElementRows;
                                     angular.forEach(performanceOverviewHeaders, function(ph){
                                         var v = pov[deg.id + '-' + ph.id + '-' + ph.period];
                                         var prcnt = CommonUtils.getPercent( v, deg.dataElements.length, true, true);
@@ -1819,73 +1367,18 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                         };
                         povTableRows.push( povTableRow );
                     });
-
-                    /*if ( degs.dataElementGroups && degs.dataElementGroups.length > 0 ){
-                        addLeadingRow();
-                        angular.forEach(degs.dataElementGroups, function(deg){
-                            if( dataParams.selectedDataElementGroup && dataParams.selectedDataElementGroup.id ){
-                                if ( deg.id === dataParams.selectedDataElementGroup.id ){
-                                    var group = {val: deg.displayName, span: 0, pSpan: 2};
-                                    resultRow.push(group);
-                                    physicalPerformanceRow.push(group);
-                                    performanceRow.push(group);
-                                    performanceOverviewRow.push(group);
-                                    cumulativeRow.push(group);
-                                    costRow.push(group);
-                                    costEffRow.push(group);
-                                    var _deg = $filter('filter')(dataParams.dataElementGroups, {id: deg.id})[0];
-                                    generateRow(group, _deg);
-                                    totalRows++;
-                                }
-                            }
-                            else{
-                                var group = {val: deg.displayName, span: 0, pSpan: 2};
-                                resultRow.push(group);
-                                physicalPerformanceRow.push(group);
-                                performanceRow.push(group);
-                                performanceOverviewRow.push(group);
-                                cumulativeRow.push(group);
-                                costRow.push(group);
-                                costEffRow.push(group);
-                                var _deg = $filter('filter')(dataParams.dataElementGroups, {id: deg.id})[0];
-                                generateRow(group, _deg);
-                                totalRows++;
-                            }
-                        });
-                    }
-                    else{
-                        generateEmptyRow();
-                    }*/
                 });
-                resultData = parsedResultRow;
-                physicalPerformanceData = parsedPhysicalPerformanceRow;
-                performanceData = parsedPerformanceRow;
-                performanceOverviewData = parsedPerformanceOverviewRow;
-                cumulativeData = parsedCumulativeRow;
-                costData = parsedCostRow;
-                costEffData = parsedCostEffRow;
             }
 
             return {
-                performanceData: performanceData,
-                resultData: resultData,
-                physicalPerformanceData: physicalPerformanceData,
-                cumulativeData: cumulativeData,
-                costData: costData,
-                costEffData: costEffData,
                 dataExists: dataExists,
                 dataHeaders: dataHeaders,
                 reportPeriods: reportPeriods,
-                redCells: redCells,
-                yellowCells: yellowCells,
-                greenCells: greenCells,
                 totalRows: totalRows,
                 hasPhysicalPerformanceData: hasPhysicalPerformanceData,
-                actionCost: actionCost,
                 completenessNum: completenessNum,
                 completenessDen: completenessDen,
                 selectedDataElementGroupSets: dataParams.selectedDataElementGroupSets,
-                performanceOverviewData: performanceOverviewData,
                 dataElementRowIndex: dataElementRowIndex,
                 tableRows: tableRows,
                 povTableRows: povTableRows

@@ -331,25 +331,18 @@ ndpFramework.controller('ObjectiveController',
                             dataElementsById: $scope.model.dataElementsById,
                             cost: $scope.model.cost,
                             displayVision2040: true,
-                            performanceOverviewHeaders: $scope.model.performanceOverviewHeaders
+                            performanceOverviewHeaders: $scope.model.performanceOverviewHeaders,
+                            displayActionBudgetData: false
                         };
 
                         var processedData = Analytics.processData( dataParams );
-
                         $scope.model.dataHeaders = processedData.dataHeaders;
                         $scope.model.reportPeriods = processedData.reportPeriods;
                         $scope.model.dataExists = processedData.dataExists;
-                        $scope.model.resultData = processedData.resultData || [];
-                        $scope.model.performanceData = processedData.performanceData || [];
-                        $scope.model.cumulativeData = processedData.cumulativeData || [];
-                        $scope.model.physicalPerformanceData = processedData.physicalPerformanceData;
-                        $scope.model.costData = processedData.costData || [];
-                        $scope.model.costEffData = processedData.costEffData || [];
+                        $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
                         $scope.model.hasPhysicalPerformanceData = processedData.hasPhysicalPerformanceData;
                         $scope.model.numerator = processedData.completenessNum;
                         $scope.model.denominator = processedData.completenessDen;
-                        $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
-                        $scope.model.performanceOverviewData = processedData.performanceOverviewData;
                         $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
                         $scope.model.tableRows = processedData.tableRows;
                         $scope.model.povTableRows = processedData.povTableRows;

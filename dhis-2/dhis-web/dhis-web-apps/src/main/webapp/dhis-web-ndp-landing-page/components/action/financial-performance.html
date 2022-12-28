@@ -1,7 +1,7 @@
 <div ng-include="'components/action/filters.html'"></div>
 <div class="row" ng-if="model.reportReady">
-    <div class="col-sm-12" ng-if="model.dataExists">
-        <span class=" hideInPrint">
+    <div ng-if="model.dataExists">
+        <span class="col-sm-12 hideInPrint">
             <span class="dropdown">
                 <label class="btn btn-default dropdown-toggle" data-toggle="dropdown" ng-attr-title="{{'download_as'| translate}}"><i class="fa fa-download"></i></label>
                 <ul class="dropdown-menu">
@@ -12,7 +12,7 @@
                 </ul>
             </span>
         </span>
-        <div id="performance" class="table-scroll">
+        <div id="performance" class="col-sm-12 table-scroll">
             <table>
                 <tr>
                     <td class="alert alert-warning" ng-repeat="period in model.reportPeriods" ng-if="!period.hasData">
@@ -35,24 +35,37 @@
                         <th class="sticky">{{'outputs'| translate}}</th>
                         <th class="sticky">{{'action'| translate}}</th>
                         <th class="center sticky" ng-repeat="header in model.dataHeaders">
-                            {{model.metaData.items[header.dimensionId].name}}
+                            {{header.name}}
                         </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="row in model.physicalPerformanceData">
-                        <td class="vertical-center" ng-repeat="col in row" rowspan="{{col.span}}" ng-style="col.trafficLight">
-                            <span ng-if="col.details" ng-click="getDataValueExplanation(col)" title="{{'click_here_for_details'| translate}}" class="link-text">
-                                {{col.val}}
-                            </span>
-                            <span ng-if="!col.details && !col.info">
-                                {{col.val}}
-                            </span>
-                            <span ng-if="col.info" ng-click="getIndicatorDictionary(col.info)">
-                                {{col.val}}
-                                <i class="fa fa-info-circle info-icon cursor-pointer hideInPrint" aria-hidden="true" title="{{'indicator_dictionary'| translate}}"></i>
-                            </span>
+                    <tr ng-repeat="row in model.tableRows">
+                        <td>
+                            {{row.dataElementGroupSet}}
                         </td>
+                        <td>
+                            {{row.dataElementGroup}}
+                        </td>
+                        <td>
+                            <span ng-if="model.showExplanation">[{{model.commentRow[row.dataElementId]}}]</span> {{row.dataElement}}
+                            <i ng-click="getIndicatorDictionary(row.dataElementId)" class="fa fa-info-circle info-icon cursor-pointer hideInPrint" aria-hidden="true" title="{{'indicator_dictionary'| translate}}"></i>
+                        </td>
+                        <td ng-repeat="dh in model.dataHeaders"
+                            ng-style="row.styles[dh.dimensionId + '.' + dh.periodId].trafficLight"
+                            ng-class="row.styles[dh.dimensionId + '.' + dh.periodId].printStyle">
+                            <span ng-if="dh.isRowData">{{row.values[dh.dimensionId + '.' + dh.periodId]}}</span>
+                            <span ng-if="!dh.isRowData">{{getBudgetPercentage(row.values, dh)}}</span>
+                        </td>
+                        <!--<td>
+                            {{getBudgetPercentage(row.values, dh.periodId, model.budgetDimension, model.releaseDimension)}}
+                        </td>
+                        <td>
+                            {{getBudgetPercentage(row.values, dh.periodId, model.budgetDimension, model.spentDimension)}}
+                        </td>
+                        <td>
+                            {{getBudgetPercentage(row.values, dh.periodId, model.releaseDimension, model.spentDimension)}}
+                        </td>-->
                     </tr>
                 </tbody>
             </table>
