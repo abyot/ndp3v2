@@ -16,6 +16,7 @@ ndpFramework.controller('OutputController',
         OptionComboService,
         ResulstChainService,
         CommonUtils,
+        DataValueService,
         Analytics) {
 
     $scope.model = {
@@ -43,7 +44,9 @@ ndpFramework.controller('OutputController',
         allPeriods: [],
         periodOffset: 0,
         openFuturePeriods: 10,
-        selectedPeriodType: 'FinancialJuly'
+        selectedPeriodType: 'FinancialJuly',
+        explanations: [],
+        commentRow: {}
     };
 
     $scope.model.horizontalMenus = [
@@ -477,6 +480,44 @@ ndpFramework.controller('OutputController',
         });
     };
 
+    $scope.getExplanations = function(){
+        $scope.model.showExplanation = !$scope.model.showExplanation;
+        if ( $scope.model.showExplanation && $scope.model.explanations.length === 0 ){
+            var dataValueSetUrl = 'orgUnit=' + $scope.selectedOrgUnit.id;
+            dataValueSetUrl += '&children=true';
+            dataValueSetUrl += '&startDate=' + $scope.model.selectedPeriods[0].startDate;
+            dataValueSetUrl += '&endDate='  + $scope.model.selectedPeriods.slice(-1)[0].endDate;
+
+            angular.forEach($scope.model.dataElementGroup, function(deg){
+                dataValueSetUrl += '&dataElementGroup=' + deg.id;
+            });
+
+            DataValueService.getDataValueSet( dataValueSetUrl ).then(function( response ){
+                if ( response && response.dataValues){
+                    angular.forEach(response.dataValues, function(dv){
+                        if(dv.comment){
+                            dv.comment = JSON.parse( dv.comment );
+                            if ( dv.comment.explanation ){
+                                $scope.model.explanations.push({
+                                    dataElement: dv.dataElement,
+                                    order: $scope.model.dataElementRowIndex[dv.dataElement],
+                                    comment: dv.comment.explanation
+                                });
+                            }
+                        }
+                    });
+
+                    $scope.model.explanations = orderByFilter( $scope.model.explanations, '-order').reverse();
+                    var index = 1;
+                    angular.forEach($scope.model.explanations, function(exp){
+                        $scope.model.commentRow[exp.dataElement] = index;
+                        index++;
+                    });
+                }
+            });
+        }
+    };
+    
     $scope.getDataValueExplanation = function( item ){
         var modalInstance = $modal.open({
             templateUrl: 'components/explanation/explanation-modal.html',
