@@ -30,7 +30,7 @@ if( dhis2.ndp.memoryOnly ) {
 dhis2.ndp.store = new dhis2.storage.Store({
     name: 'dhis2ndp',
     adapters: [dhis2.storage.IndexedDBAdapter, dhis2.storage.DomSessionStorageAdapter, dhis2.storage.InMemoryAdapter],
-    objectStores: ['dataElements', 'dataElementGroups', 'dataElementGroupSets', 'dataSets', 'optionSets', 'categoryCombos', 'attributes', 'ouLevels', 'programs', 'legendSets', 'categoryOptionGroupSets', 'optionGroups']
+    objectStores: ['dataElements', 'dataElementGroups', 'dataElementGroupSets', 'dataSets', 'optionSets', 'categoryCombos', 'attributes', 'ouLevels', 'programs', 'legendSets', 'categoryOptionGroupSets', 'optionGroups', 'optionGroupSets']
 });
 
 (function($) {
@@ -211,7 +211,12 @@ dhis2.ndp.downloadMetaData = function()
         //fetch optionGroups
         .then( getMetaOptionGroups )
         .then( filterMissingOptionGroups )
-        .then( getOptionGroups );
+        .then( getOptionGroups )
+
+        //fetch optionGroupSets
+        .then( getMetaOptionGroupSets )
+        .then( filterMissingOptionGroupSets )
+        .then( getOptionGroupSets );
 };
 
 
@@ -477,4 +482,16 @@ function filterMissingOptionGroups( objs ){
 
 function getOptionGroups( ids ){
     return dhis2.metadata.getBatches( ids, dhis2.ndp.batchSize, 'optionGroups', 'optionGroups', dhis2.ndp.apiUrl + '/optionGroups.json', 'fields=id,displayName,code,optionSet[id],options[id,displayName,code]', 'idb', dhis2.ndp.store, dhis2.metadata.processObject);
+}
+
+function getMetaOptionGroupSets(){
+    return dhis2.metadata.getMetaObjectIds('optionGroupSets', dhis2.ndp.apiUrl + '/optionGroupSets.json', 'paging=false&fields=id,version');
+}
+
+function filterMissingOptionGroupSets( objs ){
+    return dhis2.metadata.filterMissingObjIds('optionGroupSets', dhis2.ndp.store, objs);
+}
+
+function getOptionGroupSets( ids ){
+    return dhis2.metadata.getBatches( ids, dhis2.ndp.batchSize, 'optionGroupSets', 'optionGroupSets', dhis2.ndp.apiUrl + '/optionGroupSets.json', 'fields=id,displayName,code,optionSet[id],optionGroups[id,displayName,code,options[id,displayName,code]]', 'idb', dhis2.ndp.store, dhis2.metadata.processObject);
 }

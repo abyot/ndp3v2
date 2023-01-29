@@ -145,22 +145,6 @@
         "children": []
     },
     {
-        "id": "SDG",
-        "domain": "SDG",
-        "code": "sdgGoals",
-        "displayName": "sdg_results",
-        "order": 7,
-        "children": [],
-        "view": "components/sdg/sdg-status.html",
-        "color": "sdg-menu"
-    },
-    {
-        "id": "SPACE",
-        "displayName": "space",
-        "order": 8,
-        "children": []
-    },
-    {
         "id": "DG",
         "domain": "DG",
         "code": "dataGovernance",

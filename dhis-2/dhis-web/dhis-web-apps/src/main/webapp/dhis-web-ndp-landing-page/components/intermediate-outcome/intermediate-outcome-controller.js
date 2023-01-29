@@ -37,6 +37,7 @@ ndpFramework.controller('IntermediateOutcomeController',
         selectedDataElementGroupSets: [],
         performanceOverviewHeaders: [],
         dataElementGroups: [],
+        allDataElementGroups: [],
         selectedNdpProgram: null,
         selectedPeriods: [],
         periods: [],
@@ -54,7 +55,7 @@ ndpFramework.controller('IntermediateOutcomeController',
         {id: 'result', title: 'targets', order: 1, view: 'components/intermediate-outcome/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/intermediate-outcome/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/intermediate-outcome/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'components/intermediate-outcome/cluster-performance.html', class: 'main-horizontal-menu'},
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'views/cluster/cluster-performance.html', class: 'main-horizontal-menu'},
         {id: 'completeness', title: 'completeness', order: 5, view: 'components/intermediate-outcome/completeness.html', class: 'main-horizontal-menu'}
     ];
 
@@ -182,28 +183,34 @@ ndpFramework.controller('IntermediateOutcomeController',
                                 return map;
                             }, {});
 
-                            MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
+                            MetaDataFactory.getAll('optionGroupSets').then(function(optionGroupSets){
+                            
+                                $scope.model.optionGroupSets = optionGroupSets;
+                            
+                                MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
 
-                                $scope.model.dataElementGroups = dataElementGroups;
+                                    $scope.model.allDataElementGroups = dataElementGroups;
+                                    $scope.model.dataElementGroups = dataElementGroups;
 
-                                MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-programme').then(function(dataElementGroupSets){
-                                    $scope.model.dataElementGroupSets = dataElementGroupSets;
+                                    MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-programme').then(function(dataElementGroupSets){
+                                        $scope.model.dataElementGroupSets = dataElementGroupSets;
 
-                                    var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
-                                    $scope.model.allPeriods = angular.copy( periods );
-                                    $scope.model.periods = periods;
+                                        var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
+                                        $scope.model.allPeriods = angular.copy( periods );
+                                        $scope.model.periods = periods;
 
-                                    var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
+                                        var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
 
-                                    angular.forEach($scope.model.periods, function(pe){
-                                        if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
-                                            $scope.model.selectedPeriods.push(pe);
-                                        }
+                                        angular.forEach($scope.model.periods, function(pe){
+                                            if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
+                                                $scope.model.selectedPeriods.push(pe);
+                                            }
+                                        });
+
+                                        $scope.model.metaDataCached = true;
+                                        $scope.populateMenu();
+                                        $scope.model.performanceOverviewLegends = CommonUtils.getPerformanceOverviewHeaders();
                                     });
-
-                                    $scope.model.metaDataCached = true;
-                                    $scope.populateMenu();
-                                    $scope.model.performanceOverviewLegends = CommonUtils.getPerformanceOverviewHeaders();
                                 });
                             });
                         });
@@ -224,6 +231,16 @@ ndpFramework.controller('IntermediateOutcomeController',
         if( $scope.model.selectedMenu && $scope.model.selectedMenu.ndp && $scope.model.selectedMenu.code ){
             $scope.model.dataElementGroupSets = $filter('filter')($scope.model.dataElementGroupSets, {ndp: $scope.model.selectedMenu.ndp}, true);
         }
+        
+        var sectorsOpgs = $filter('getFirst')($scope.model.optionGroupSets, {code: $scope.model.selectedMenu.ndp + '_CLUSTER'});
+            
+        $scope.model.clusters = sectorsOpgs && sectorsOpgs.optionGroups ? sectorsOpgs.optionGroups : [];
+        if( !$scope.model.clusters || !$scope.model.clusters.length || !$scope.model.clusters.length === 0 ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster_configuration"));
+            return;
+        }
+        
+        console.log('clusters: ', $scope.model.clusters);
     };
 
     $scope.resetDataView = function(){
@@ -366,6 +383,27 @@ ndpFramework.controller('IntermediateOutcomeController',
                 }
             });
         }
+    };
+
+    $scope.getClusterData = function(){
+        $scope.model.clusterReportReady = true;
+        $scope.model.hasClusterData = true;
+        var clusterGroups = [];
+        angular.forEach($scope.model.selectedCluster.options, function(op){
+            var filter = {ndpProgramme: op.code};
+            var degss = $filter('filter')($scope.model.dataElementGroupSets, filter, true);
+            angular.forEach(degss, function(degs){
+                angular.forEach(degs.dataElementGroups, function(deg){
+                    var _deg = $filter('filter')($scope.model.allDataElementGroups, {indicatorGroupType: 'intermediateOutcome', id: deg.id}, true);
+                    if ( _deg.length > 0 ){
+                        clusterGroups.push( _deg[0] );
+                    }
+                });
+            });
+        });
+        
+        clusterGroups = orderByFilter( clusterGroups, '-code').reverse();
+        console.log('clusterOutcomes:  ', clusterGroups);
     };
 
     $scope.showOrgUnitTree = function(){

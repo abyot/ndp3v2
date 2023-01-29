@@ -30,15 +30,15 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
     };
 })
 
-.service('DashboardItemService', function () {
-    this.dashboardItems = null;
+.service('CommonDataService', function () {
+    this.clusterDataSet = null;
 
-    this.setDashboardItems = function (dashboardItems) {
-        this.dashboardItems = dashboardItems;
+    this.setClusterDataSet = function (clusterDataSet) {
+        this.clusterDataSet = clusterDataSet;
     };
 
-    this.getDashboardItems= function () {
-        return this.dashboardItems;
+    this.getClusterDataSet= function () {
+        return this.clusterDataSet;
     };
 })
 
@@ -293,7 +293,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             });
             return def.promise;
         },
-        getBtaAndBsrDimensions: function(){
+        getBsrDimensions: function(){
             
             var def = $q.defer();
 
@@ -330,17 +330,9 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                            }
                        });
 
-                       var res = {
-                           bsr: dimension,
-                           budget: budgetDimension,
-                           release: releaseDimension,
-                           spent: spentDimension
-                       };
-                       
-                       
                        $rootScope.$apply(function(){
-                           def.resolve( angular.extend( res, bta ) );
-                       });
+                            def.resolve({bsr: dimension, budget: budgetDimension, release: releaseDimension, spent: spentDimension});
+                        });
                     });
                 });                                
             });
@@ -1632,7 +1624,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     if( tei.attributes ){
                         var project = {
                             orgUnit: tei.orgUnit,
-                            trackedEntityInstance: tei.trackedEntityInstance,
+                            trackedEntityInstance: tei.trackedEntity,
                             style: {}
                         };
                         angular.forEach(tei.attributes, function(att){
@@ -1676,46 +1668,51 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                             if ( ev && ev.dataValues ){
                                 project.status = {};
                                 angular.forEach(ev.dataValues, function(dv){
-                                    var de = dataElementsById[dv.dataElement];
-                                    var val = dv.value;
-                                    if( de ){
-                                        val = CommonUtils.formatDataValue(null, val, de, optionSets, 'USER');
-                                    }
-                                    if ( de.code === 'AT_RATING' && val !== '' ){
-                                        var style = CommonUtils.getTrafficColorForValue( val );
-                                        project.style[dv.dataElement] = {
-                                            inlineStyle: style.inlineStyle,
-                                            printStyle: style.printStyle
-                                        };
-                                    }
-                                    if ( de.code === 'AT_PROGRESS_STATUS' && val !== '' ){
-                                        var style = CommonUtils.getFixedTrafficStyle();
-                                        if( dv.value === 'Not started' ){
-                                            project.style[dv.dataElement] = style.red;
+                                    if( dataElementsById[dv.dataElement] ){
+                                        var de = dataElementsById[dv.dataElement];
+                                        var val = dv.value;
+                                        if( de ){
+                                            val = CommonUtils.formatDataValue(null, val, de, optionSets, 'USER');
                                         }
-                                        if( dv.value === 'In progress'){
-                                            project.style[dv.dataElement] = style.yellow;
+                                        if ( de.code === 'AT_RATING' && val !== '' ){
+                                            var style = CommonUtils.getTrafficColorForValue( val );
+                                            project.style[dv.dataElement] = {
+                                                inlineStyle: style.inlineStyle,
+                                                printStyle: style.printStyle
+                                            };
                                         }
-                                        if( dv.value === ' Completed'){
-                                            project.style[dv.dataElement] = style.green;
+                                        if ( de.code === 'AT_PROGRESS_STATUS' && val !== '' ){
+                                            var style = CommonUtils.getFixedTrafficStyle();
+                                            if( dv.value === 'Not started' ){
+                                                project.style[dv.dataElement] = style.red;
+                                            }
+                                            if( dv.value === 'In progress'){
+                                                project.style[dv.dataElement] = style.yellow;
+                                            }
+                                            if( dv.value === ' Completed'){
+                                                project.style[dv.dataElement] = style.green;
+                                            }
+                                            if( dv.value === 'Cancelled'){
+                                                project.style[dv.dataElement] = style.grey;
+                                            }
                                         }
-                                        if( dv.value === 'Cancelled'){
-                                            project.style[dv.dataElement] = style.grey;
+                                        if ( de.code === 'AT_DELAYED' && val !== '' ){
+                                            var style = CommonUtils.getFixedTrafficStyle();
+                                            if( dv.value === 'true' ){
+                                                project.style[dv.dataElement] = style.red;
+                                            }
+                                            if( dv.value === 'false'){
+                                                project.style[dv.dataElement] = style.green;
+                                            }
                                         }
-                                    }
-                                    if ( de.code === 'AT_DELAYED' && val !== '' ){
-                                        var style = CommonUtils.getFixedTrafficStyle();
-                                        if( dv.value === 'true' ){
-                                            project.style[dv.dataElement] = style.red;
-                                        }
-                                        if( dv.value === 'false'){
-                                            project.style[dv.dataElement] = style.green;
-                                        }
-                                    }
-                                    project.status[dv.dataElement] = val;
+                                        project.status[dv.dataElement] = val;
+                                    }                                    
                                 });
                             }
                         }
+                    }                    
+                    if( tei.relationships && tei.relationships.length === 1 ){
+                        project.relationship = tei.relationships[0].to.trackedEntity;
                     }
                     projects.push( project );
                 });
@@ -1726,41 +1723,28 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             });
             return promise;
         },
-        get: function( project, optionSets, attributesById, dataElementsById ){
-            var url = dhis2.ndp.apiUrl + '/trackedEntityInstances/' + project.trackedEntityInstance +'.json?fields=*';
+        getKpi: function( trackedEntityInstance, optionSets, attributesById, dataElementsById ){
+            var url = dhis2.ndp.apiUrl + '/trackedEntityInstances/' + trackedEntityInstance +'.json?fields=*';
             var promise = $http.get( url ).then(function(response){
 
-                var tei = response.data;
+                var kpi = {};
 
-                if( tei && tei.attributes ){
-                    angular.forEach(tei.attributes, function(att){
-                        var attribute = attributesById[att.attribute];
-                        var val = att.value;
-                        if( attribute ){
-                            val = CommonUtils.formatDataValue(null, val, attribute, optionSets, 'USER');
-                        }
-                        att.value = val;
-                    });
-                }
-
-                if( tei.enrollments ){
-                    angular.forEach(tei.enrollments, function(en){
-                        en.enrollmentDate = DateUtils.formatFromApiToUser(en.enrollmentDate);
-                        angular.forEach(en.events, function(ev){
-                            ev.eventDate = DateUtils.formatFromApiToUser(ev.eventDate);
-                            angular.forEach(ev.dataValues, function(dv){
-                                var de = dataElementsById[dv.dataElement];
-                                var val = dv.value;
-                                if ( de ){
-                                    val = CommonUtils.formatDataValue(ev, val, de, optionSets, 'USER');
-                                }
-                                ev[dv.dataElement] = val;
-                            });
+                if( response.data.enrollments && response.data.enrollments.length === 1 ){
+                    var events = response.data.enrollments[0].events;
+                    events = orderByFilter(events, '-eventDate');
+                    if( events[0] ){
+                        kpi.eventDate = DateUtils.formatFromApiToUser(events[0].eventDate);
+                        angular.forEach(events[0].dataValues, function(dv){
+                            var de = dataElementsById[dv.dataElement];
+                            var val = dv.value;
+                            if ( de ){
+                                val = CommonUtils.formatDataValue(events[0], val, de, optionSets, 'USER');
+                            }
+                            kpi[dv.dataElement] = val;
                         });
-                    });
+                    }
                 }
-
-                return tei;
+                return kpi;
             }, function(response){
                 CommonUtils.errorNotifier(response);
             });

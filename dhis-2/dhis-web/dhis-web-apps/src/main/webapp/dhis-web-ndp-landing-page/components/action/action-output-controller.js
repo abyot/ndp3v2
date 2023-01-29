@@ -50,6 +50,7 @@ ndpFramework.controller('ActionOutputController',
 
     $scope.model.horizontalMenus = [
         {id: 'financialPerformance', title: 'financial_performance', order: 1, view: 'components/action/financial-performance.html', class: 'main-horizontal-menu'},
+        {id: 'budgetPerformance', title: 'financial_performance', order: 1, view: 'components/action/financial-performance.html', class: 'main-horizontal-menu'},
         {id: 'clusterPerformance', title: 'cluster_performance', order: 2, view: 'components/action/cluster-performance.html', class: 'main-horizontal-menu'},
         {id: 'completeness', title: 'completeness', order: 3, view: 'components/action/completeness.html', class: 'main-horizontal-menu'}
     ];
@@ -195,62 +196,66 @@ ndpFramework.controller('ActionOutputController',
                     $scope.model.piapObjectives = $scope.model.resultsFrameworkChain.objectives;
                     $scope.model.interventions = $scope.model.resultsFrameworkChain.interventions;
 
-                    OptionComboService.getBtaAndBsrDimensions().then(function( response ){
+                    OptionComboService.getBtaDimensions().then(function( btaResponse ){
                         
-                        if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
+                        if( !btaResponse || !btaResponse.bta || !btaResponse.baseline || !btaResponse.actual || !btaResponse.target ){
                             NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
                             return;
                         }
-                        
-                        if( !response || !response.bsr || !response.budget || !response.spent || !response.release ){
-                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bsr_dimensions"));
-                            return;
-                        }
-                        
-                        $scope.model.bta = response.bta;
+
+                        $scope.model.bta = btaResponse.bta;
                         $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
-                        $scope.model.actualDimension = response.actual;
-                        $scope.model.targetDimension = response.target;
-                        $scope.model.baselineDimension = response.baseline;
-                        
-                        $scope.model.bsr = response.bsr;
-                        $scope.model.budgetSpentReleaseDimensions = $.map($scope.model.bsr.options, function(d){return d.id;});
-                        $scope.model.budgetDimension = response.budget;
-                        $scope.model.spentDimension = response.spent;
-                        $scope.model.releaseDimension = response.release;
+                        $scope.model.actualDimension = btaResponse.actual;
+                        $scope.model.targetDimension = btaResponse.target;
+                        $scope.model.baselineDimension = btaResponse.baseline;
 
-                        MetaDataFactory.getAll('dataElements').then(function(dataElements){
+                        OptionComboService.getBsrDimensions().then(function( bsrResponse ){
 
-                            $scope.model.dataElementsById = dataElements.reduce( function(map, obj){
-                                map[obj.id] = obj;
-                                return map;
-                            }, {});
+                            if( !bsrResponse || !bsrResponse.bsr || !bsrResponse.budget || !bsrResponse.spent || !bsrResponse.release ){
+                                NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bsr_dimensions"));
+                                return;
+                            }
 
-                            MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
+                            $scope.model.bsr = bsrResponse.bsr;
+                            $scope.model.budgetSpentReleaseDimensions = $.map($scope.model.bsr.options, function(d){return d.id;});
+                            $scope.model.budgetDimension = bsrResponse.budget;
+                            $scope.model.spentDimension = bsrResponse.spent;
+                            $scope.model.releaseDimension = bsrResponse.release;
 
-                                $scope.model.dataElementGroups = dataElementGroups;
+                            MetaDataFactory.getAll('dataElements').then(function(dataElements){
 
-                                MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-intervention4action').then(function(dataElementGroupSets){
-                                    $scope.model.dataElementGroupSets = dataElementGroupSets;
+                                $scope.model.dataElementsById = dataElements.reduce( function(map, obj){
+                                    map[obj.id] = obj;
+                                    return map;
+                                }, {});
 
-                                    var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
-                                    $scope.model.allPeriods = angular.copy( periods );
-                                    $scope.model.periods = periods;
+                                MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
 
-                                    var selectedPeriodNames = ['2020/21'];
+                                    $scope.model.dataElementGroups = dataElementGroups;
 
-                                    angular.forEach($scope.model.periods, function(pe){
-                                        if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
-                                           $scope.model.selectedPeriods.push(pe);
-                                        }
+                                    MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-intervention4action').then(function(dataElementGroupSets){
+                                        $scope.model.dataElementGroupSets = dataElementGroupSets;
+
+                                        var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
+                                        $scope.model.allPeriods = angular.copy( periods );
+                                        $scope.model.periods = periods;
+
+                                        var selectedPeriodNames = ['2020/21'];
+
+                                        angular.forEach($scope.model.periods, function(pe){
+                                            if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
+                                               $scope.model.selectedPeriods.push(pe);
+                                            }
+                                        });
+
+                                        $scope.model.metaDataCached = true;
+                                        $scope.populateMenu();
                                     });
-
-                                    $scope.model.metaDataCached = true;
-                                    $scope.populateMenu();
                                 });
                             });
-                        });
 
+                        });
+                    
                     });
                 });
             });

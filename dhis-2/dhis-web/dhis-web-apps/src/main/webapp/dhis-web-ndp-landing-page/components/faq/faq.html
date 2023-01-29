@@ -35,12 +35,12 @@
                     <tr ng-click="showFaqResponse( faq )">
                         <td ng-repeat="header in model.dynamicHeaders"
                             class="cursor-pointer"
-                            ng-class="{'selected-faq': model.selectedFaq && model.selectedFaq.event === faq.event}">
+                            ng-class="{'selected-row': model.selectedFaq && model.selectedFaq.event === faq.event}">
                             {{faq[header.id]}}
                         </td>
                     </tr>
                     <tr class="faq-details" ng-if="model.showFaqResponse && model.selectedFaq.event === faq.event">
-                        <td class="alert alert-info selected-faq-container">
+                        <td class="alert alert-info selected-row-container">
                             {{faq.faqResponse}}
                         </td>
                     </tr>

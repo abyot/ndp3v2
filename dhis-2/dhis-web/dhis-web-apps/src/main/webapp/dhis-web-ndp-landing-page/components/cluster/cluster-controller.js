@@ -2,7 +2,7 @@
 
 /* global ndpFramework */
 
-ndpFramework.controller('OutcomeController',
+ndpFramework.controller('ClusterController',
     function($scope,
         $translate,
         $modal,
@@ -53,7 +53,7 @@ ndpFramework.controller('OutcomeController',
         {id: 'target', title: 'targets', order: 1, view: 'components/outcome/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/outcome/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/outcome/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'views/cluster/cluster-performance.html', class: 'main-horizontal-menu'},
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'components/outcome/cluster-performance.html', class: 'main-horizontal-menu'},
         {id: 'completeness', title: 'completeness', order: 5, view: 'components/outcome/completeness.html', class: 'main-horizontal-menu'}
     ];
 
@@ -159,8 +159,6 @@ ndpFramework.controller('OutcomeController',
  
                     MetaDataFactory.getAll('dataElements').then(function(dataElements){
 
-                        $scope.model.allDataElements = dataElements;
-
                         $scope.model.dataElementsById = dataElements.reduce( function(map, obj){
                             map[obj.id] = obj;
                             return map;
@@ -182,7 +180,7 @@ ndpFramework.controller('OutcomeController',
                                     var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
                                     $scope.model.allPeriods = angular.copy( periods );
                                     $scope.model.periods = periods;
-                                    
+
                                     var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
 
                                     angular.forEach($scope.model.periods, function(pe){
@@ -264,113 +262,10 @@ ndpFramework.controller('OutcomeController',
         $scope.model.allPeriods = angular.copy( $scope.model.periods );
     };
 
-    $scope.getAnalyticsData = function(){
-
-        $scope.model.data = null;
-        var analyticsUrl = '';
-
-        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
-            return;
-        }
-
-        if( $scope.model.dataElementGroup.length === 0 || !$scope.model.dataElementGroup ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_outcome"));
-            return;
-        }
-
-        $scope.getBasePeriod();
-
-        if ( !$scope.model.basePeriod || !$scope.model.basePeriod.id ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_base_period"));
-            return;
-        }
-
-        if( $scope.model.dataElementGroup && $scope.model.dataElementGroup.length > 0 && $scope.model.selectedPeriods.length > 0){
-            analyticsUrl += '&filter=ou:'+ $scope.selectedOrgUnit.id +'&displayProperty=NAME&includeMetadataDetails=true';
-            analyticsUrl += '&dimension=co&dimension=' + $scope.model.bta.category + ':' + $.map($scope.model.baseLineTargetActualDimensions, function(dm){return dm;}).join(';');
-            analyticsUrl += '&dimension=pe:' + $.map($scope.model.selectedPeriods.concat( $scope.model.basePeriod ), function(pe){return pe.id;}).join(';');
-
-            var pHeaders = CommonUtils.getPerformanceOverviewHeaders();
-            $scope.model.pHeadersLength = pHeaders.length;
-            var prds = orderByFilter( $scope.model.selectedPeriods, '-id').reverse();
-            $scope.model.performanceOverviewHeaders = [];
-            angular.forEach(prds, function(pe){
-                angular.forEach( pHeaders, function(p){
-                    var h = angular.copy( p );
-                    h.period = pe.id;
-                    $scope.model.performanceOverviewHeaders.push( h );
-                });
-            });
-
-            $scope.model.dataElementGroupsById = $scope.model.dataElementGroup.reduce( function(map, obj){
-                map[obj.id] = obj;
-                return map;
-            }, {});
-
-            var des = [];
-            angular.forEach($scope.model.dataElementGroup, function(deg){
-                des.push('DE_GROUP-' + deg.id);
-            });
-            analyticsUrl += '&dimension=dx:' + des.join(';');
-
-            $scope.model.reportReady = false;
-            $scope.model.reportStarted = true;
-            FinancialDataService.getLocalData('data/cost.json').then(function(cost){
-                $scope.model.cost = cost;
-
-
-                Analytics.getData( analyticsUrl ).then(function(data){
-                    if( data && data.data && data.metaData ){
-                        $scope.model.data = data.data;
-                        $scope.model.metaData = data.metaData;
-                        $scope.model.reportReady = true;
-                        $scope.model.reportStarted = false;
-
-                        var dataParams = {
-                            data: data.data,
-                            metaData: data.metaData,
-                            reportPeriods: angular.copy( $scope.model.selectedPeriods ),
-                            bta: $scope.model.bta,
-                            actualDimension: $scope.model.actualDimension,
-                            targetDimension: $scope.model.targetDimension,
-                            baselineDimension: $scope.model.baselineDimension,
-                            selectedDataElementGroupSets: $scope.model.selectedDataElementGroupSets,
-                            selectedDataElementGroup: $scope.model.selectedKra,
-                            dataElementGroups: $scope.model.dataElementGroups,
-                            basePeriod: $scope.model.basePeriod,
-                            maxPeriod: $scope.model.selectedPeriods.slice(-1)[0],
-                            allPeriods: $scope.model.allPeriods,
-                            dataElementGroupsById: $scope.model.dataElementGroupsById,
-                            dataElementsById: $scope.model.dataElementsById,
-                            cost: $scope.model.cost,
-                            legendSetsById: $scope.model.legendSetsById,
-                            defaultLegendSet: $scope.model.defaultLegendSet,
-                            performanceOverviewHeaders: $scope.model.performanceOverviewHeaders,
-                            displayActionBudgetData: false
-                        };
-
-                        var processedData = Analytics.processData( dataParams );
-                        $scope.model.dataHeaders = processedData.dataHeaders;
-                        $scope.model.reportPeriods = processedData.reportPeriods;
-                        $scope.model.dataExists = processedData.dataExists;
-                        $scope.model.selectedDataElementGroupSets = processedData.selectedDataElementGroupSets;
-                        $scope.model.hasPhysicalPerformanceData = processedData.hasPhysicalPerformanceData;
-                        $scope.model.numerator = processedData.completenessNum;
-                        $scope.model.denominator = processedData.completenessDen;
-                        $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
-                        $scope.model.tableRows = processedData.tableRows;
-                        $scope.model.povTableRows = processedData.povTableRows;
-                    }
-                });
-            });
-        }
-    };
-
     $scope.getClusterData = function(){
         $scope.model.clusterReportReady = true;
         $scope.model.hasClusterData = true;
-        var clusterGroups = [];
+        var clusterOutcomes = [];
         angular.forEach($scope.model.selectedCluster.options, function(op){
             var filter = {ndpProgramme: op.code};
             var degss = $filter('filter')($scope.model.dataElementGroupSets, filter, true);
@@ -378,14 +273,14 @@ ndpFramework.controller('OutcomeController',
                 angular.forEach(degs.dataElementGroups, function(deg){
                     var _deg = $filter('filter')($scope.model.allDataElementGroups, {indicatorGroupType: 'outcome', id: deg.id}, true);
                     if ( _deg.length > 0 ){
-                        clusterGroups.push( _deg[0] );
+                        clusterOutcomes.push( _deg[0] );
                     }
                 });
             });
         });
-        console.log('dataElementsById:  ', $scope.model.dataElementsById);
-        clusterGroups = orderByFilter( clusterGroups, '-code').reverse();
-        console.log('clusterOutcomes:  ', clusterGroups);
+        
+        clusterOutcomes = orderByFilter( clusterOutcomes, '-code').reverse();
+        console.log('clusterOutcomes:  ', clusterOutcomes);
     };
     
     $scope.showOrgUnitTree = function(){

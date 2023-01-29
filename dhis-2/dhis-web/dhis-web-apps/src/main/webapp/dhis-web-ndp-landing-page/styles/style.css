@@ -195,6 +195,11 @@ html, body {
     top: 32px;
 }
 
+.dhis2-table-hover > tbody > tr:hover > td, 
+.table-hover > tbody > tr:hover > th {
+    background-color: #dfe9f4;
+}
+
 .category-menu {
     background-color: #fff;
     height: auto;
@@ -674,12 +679,12 @@ ul.tree ul li:last-child:before {
     cursor: pointer;
 }
 
-.selected-faq {
+.selected-row {
     font-weight: bold;
     font-size: 16px !important;
 }
 
-.selected-faq-container {
+.selected-row-container {
     padding-bottom: 40px !important;
 }
 

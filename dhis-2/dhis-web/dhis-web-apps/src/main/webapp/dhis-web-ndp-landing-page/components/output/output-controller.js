@@ -53,7 +53,7 @@ ndpFramework.controller('OutputController',
         {id: 'result', title: 'targets', order: 1, view: 'components/output/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/output/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/output/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'components/output/cluster-performance.html', class: 'main-horizontal-menu'},
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'views/cluster/cluster-performance.html', class: 'main-horizontal-menu'},
         {id: 'completeness', title: 'completeness', order: 5, view: 'components/output/completeness.html', class: 'main-horizontal-menu'}
     ];
 
@@ -81,9 +81,9 @@ ndpFramework.controller('OutputController',
         });
     };
 
-    $scope.$on('MENU', function(){
+    /*$scope.$on('MENU', function(){
         $scope.populateMenu();
-    });
+    });*/
 
     $scope.$watch('model.selectedNdpProgram', function(){
         $scope.resetDataView();
@@ -204,34 +204,40 @@ ndpFramework.controller('OutputController',
                 $scope.model.piapObjectives = $scope.model.resultsFrameworkChain.objectives;
                 $scope.model.interventions = $scope.model.resultsFrameworkChain.interventions;
 
-                OptionComboService.getBtaDimensions().then(function( response ){
+                MetaDataFactory.getAll('optionGroupSets').then(function(optionGroupSets){
+                    
+                    $scope.model.optionGroupSets = optionGroupSets;
+                
+                    OptionComboService.getBtaDimensions().then(function( response ){
 
-                    if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
-                        NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
-                        return;
-                    }
-
-                    $scope.model.bta = response.bta;
-                    $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
-                    $scope.model.actualDimension = response.actual;
-                    $scope.model.targetDimension = response.target;
-                    $scope.model.baselineDimension = response.baseline;
-
-                    var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
-                    $scope.model.allPeriods = angular.copy( periods );
-                    $scope.model.periods = periods;
-
-                    var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
-
-                    angular.forEach($scope.model.periods, function(pe){
-                        if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
-                            $scope.model.selectedPeriods.push(pe);
+                        if( !response || !response.bta || !response.baseline || !response.actual || !response.target ){
+                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
+                            return;
                         }
+
+                        $scope.model.bta = response.bta;
+                        $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
+                        $scope.model.actualDimension = response.actual;
+                        $scope.model.targetDimension = response.target;
+                        $scope.model.baselineDimension = response.baseline;
+
+                        var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
+                        $scope.model.allPeriods = angular.copy( periods );
+                        $scope.model.periods = periods;
+
+                        var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
+
+                        angular.forEach($scope.model.periods, function(pe){
+                            if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
+                                $scope.model.selectedPeriods.push(pe);
+                            }
+                        });
+
+                        $scope.model.metaDataCached = true;
+                        $scope.populateMenu();
+                        $scope.model.performanceOverviewLegends = CommonUtils.getPerformanceOverviewHeaders();
+
                     });
-
-                    $scope.model.metaDataCached = true;
-                    $scope.model.performanceOverviewLegends = CommonUtils.getPerformanceOverviewHeaders();
-
                 });
             });
         });
@@ -245,6 +251,14 @@ ndpFramework.controller('OutputController',
 
         if( $scope.model.selectedMenu && $scope.model.selectedMenu.ndp && $scope.model.selectedMenu.code ){
             $scope.model.dataElementGroupSets = $filter('filter')($scope.model.dataElementGroupSets, {ndp: $scope.model.selectedMenu.ndp}, true);
+        }
+        
+        var sectorsOpgs = $filter('getFirst')($scope.model.optionGroupSets, {code: $scope.model.selectedMenu.ndp + '_CLUSTER'});
+            
+        $scope.model.clusters = sectorsOpgs && sectorsOpgs.optionGroups ? sectorsOpgs.optionGroups : [];
+        if( !$scope.model.clusters || !$scope.model.clusters.length || !$scope.model.clusters.length === 0 ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster_configuration"));
+            return;
         }
     };
 

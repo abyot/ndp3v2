@@ -52,27 +52,30 @@
                     </ul>
                 </span>
             </span>
-            <!--<span class="horizontal-spacing hideInPrint" ng-if="model.coreProjectAttribute && model.coreProjectAttribute.id">
-                <label class="checkbox-inline" ng-if="model.projects.length > 0">
-                    <input type="checkbox" ng-model="model.showOnlyCoreProject">
-                    <span>{{'show_only_core'| translate}}</span>
-                </label>
-            </span>-->
-            <div id="exportTable">
-                <table class="listTable dhis2-table-striped-border">
+            <div id="exportTable" class="table-scroll">
+                <table class="listTable dhis2-table-hover">
                     <thead>
                         <tr>
-                            <th ng-repeat="att in model.selectedProgram.programTrackedEntityAttributes| filter: {displayInList: true}">
+                            <th class="sticky">
+                                {{'vote' | translate}}
+                            </th>
+                            <th class="sticky" ng-repeat="att in model.selectedProgram.programTrackedEntityAttributes | orderBy: 'sortOrder' | filter: {displayInList: true}">
                                 {{att.trackedEntityAttribute.displayName}}
                             </th>
                         </tr>
                     </thead>
-                    <tbody ng-repeat="project in model.projects" ng-click="getProjectDetails(project)">
-                        <tr>
-                            <td class="vertical-center word-wrap"
-                                ng-repeat="att in model.selectedProgram.programTrackedEntityAttributes| filter: {displayInList: true}"
+                    <tbody ng-repeat="project in model.projects">
+                        <tr ng-click="getProjectDetails(project)">
+                            <td class="vertical-center">
+                                <span ng-class="{'selected-row': project.trackedEntityInstance === model.selectedProject.trackedEntityInstance}">{{project.vote}}</span>
+                            </td>
+                            <td ng-style="project.style[att.trackedEntityAttribute.id].inlineStyle"
+                                ng-class="project.style[att.trackedEntityAttribute.id].printStyle"
+                                class="vertical-center word-wrap"
+                                ng-repeat="att in model.selectedProgram.programTrackedEntityAttributes | orderBy: 'sortOrder' | filter: {displayInList: true}"
                                 ng-class="{true: 'col-sm-4', false: 'col-sm-1'} [project[att.trackedEntityAttribute.id].length > 70]">
-                                <span ng-switch="att.valueType">
+                                <span ng-switch="att.valueType"
+                                      ng-class="{'selected-row': project.trackedEntityInstance === model.selectedProject.trackedEntityInstance}">
                                     <span ng-switch-when="BOOLEAN">
                                         <span ng-if="project[att.trackedEntityAttribute.id] === 'true'"><i class="fa fa-check"></i></span>
                                     </span>
@@ -85,9 +88,9 @@
                                 </span>
                             </td>
                         </tr>
-                        <tr class="project-details" ng-if="model.showProjectDetails && model.selectedProject.trackedEntityInstance === project.trackedEntityInstance">
+                        <tr ng-if="model.showProjectDetails && model.selectedProject.trackedEntityInstance === project.trackedEntityInstance">
                             <td colspan="100%">
-                                <div ng-include="'views/horizontal-menu.html'"></div>
+                                <div class="vertical-spacing selected-row-container" ng-include="'views/horizontal-menu.html'"></div>
                             </td>
                         </tr>
                     </tbody>
