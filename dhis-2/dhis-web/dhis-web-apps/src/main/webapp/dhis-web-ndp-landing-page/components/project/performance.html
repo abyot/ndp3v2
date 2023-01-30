@@ -53,7 +53,7 @@
                 </span>
             </span>
             <div id="exportTable" class="table-scroll">
-                <table class="listTable dhis2-table-hover">
+                <table>
                     <thead>
                         <tr>
                             <th class="sticky">
@@ -66,12 +66,12 @@
                     </thead>
                     <tbody ng-repeat="project in model.projects">
                         <tr ng-click="getProjectDetails(project)">
-                            <td class="vertical-center">
+                            <td class="vertical-center cursor-pointer">
                                 <span ng-class="{'selected-row': project.trackedEntityInstance === model.selectedProject.trackedEntityInstance}">{{project.vote}}</span>
                             </td>
                             <td ng-style="project.style[att.trackedEntityAttribute.id].inlineStyle"
                                 ng-class="project.style[att.trackedEntityAttribute.id].printStyle"
-                                class="vertical-center word-wrap"
+                                class="vertical-center word-wrap cursor-pointer"
                                 ng-repeat="att in model.selectedProgram.programTrackedEntityAttributes | orderBy: 'sortOrder' | filter: {displayInList: true}"
                                 ng-class="{true: 'col-sm-4', false: 'col-sm-1'} [project[att.trackedEntityAttribute.id].length > 70]">
                                 <span ng-switch="att.valueType"
