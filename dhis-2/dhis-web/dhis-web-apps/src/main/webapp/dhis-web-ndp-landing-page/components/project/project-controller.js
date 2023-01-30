@@ -88,8 +88,6 @@ ndpFramework.controller('ProjectController',
             
             $scope.model.programs = $filter('filter')(programs, {programType: 'WITH_REGISTRATION', programDomain: 'projectTracker'}, true);
             $scope.model.kpiProgram =  $filter('getFirst')(programs, {programType: 'WITH_REGISTRATION', programDomain: 'projectKpi'}, true);
-            
-            console.log('kpiProgram:  ', $scope.model.kpiProgram);
 
             $scope.model.selectedMenu = SelectedMenuService.getSelectedMenu();
 
