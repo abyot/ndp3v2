@@ -322,8 +322,8 @@ var ndpDataEntryServices = angular.module('ndpDataEntryServices', ['ngResource']
                                     if( _oco.hasAttachment ){
                                         oco.hasAttachment = _oco.hasAttachment;
                                     }
-                                    if( _oco.btaDimensionType ){
-                                        oco.btaDimensionType = _oco.btaDimensionType;
+                                    if( _oco.dimensionType ){
+                                        oco.dimensionType = _oco.dimensionType;
                                     }
                                 }
                             });

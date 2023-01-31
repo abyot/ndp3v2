@@ -157,13 +157,13 @@ ndpTarget.controller('DataEntryController',
             }
 
             angular.forEach($scope.model.selectedAttributeCategoryCombo.categoryOptionCombos, function(aoc){
-                if ( aoc.btaDimensionType === 'baseline' ){
+                if ( aoc.dimensionType === 'baseline' ){
                     $scope.model.baseline = aoc;
                 }
-                else if ( aoc.btaDimensionType === 'target' ){
+                else if ( aoc.dimensionType === 'target' ){
                     $scope.model.target = aoc;
                 }
-                else if ( aoc.btaDimensionType === 'actual' ){
+                else if ( aoc.dimensionType === 'actual' ){
                     $scope.model.actual = aoc;
                 }
             });
@@ -476,7 +476,7 @@ ndpTarget.controller('DataEntryController',
         ModalService.showModal({}, modalOptions).then(function(result){
             var dsr = {completeDataSetRegistrations: []};
             angular.forEach($scope.model.selectedAttributeCategoryCombo.categoryOptionCombos, function(aoc){
-                if ( aoc.btaDimensionType === 'baseline'  || aoc.btaDimensionType === 'target' ){
+                if ( aoc.dimensionType === 'baseline'  || aoc.dimensionType === 'target' ){
                     angular.forEach($scope.model.actualPeriods, function(p){
                         dsr.completeDataSetRegistrations.push( {dataSet: $scope.model.selectedDataSet.id, organisationUnit: $scope.selectedOrgUnit.id, period: p.id, attributeOptionCombo: aoc.id} );
                     });
@@ -508,7 +508,7 @@ ndpTarget.controller('DataEntryController',
         ModalService.showModal({}, modalOptions).then(function(result){
 
             angular.forEach($scope.model.selectedAttributeCategoryCombo.categoryOptionCombos, function(aoc){
-                if ( aoc.btaDimensionType === 'baseline'  || aoc.btaDimensionType === 'target' ){
+                if ( aoc.dimensionType === 'baseline'  || aoc.dimensionType === 'target' ){
                     angular.forEach($scope.model.actualPeriods, function(p){
                         CompletenessService.delete($scope.model.selectedDataSet.id,
                             p.id,

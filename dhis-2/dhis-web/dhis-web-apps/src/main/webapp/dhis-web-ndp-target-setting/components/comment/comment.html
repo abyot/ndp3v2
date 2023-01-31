@@ -23,7 +23,7 @@
                 </th>
             </tr>
         </thead>
-        <tr ng-repeat="aoc in selectedAttributeCategoryCombo.categoryOptionCombos" ng-if="aoc.btaDimensionType === 'target' || aoc.btaDimensionType === 'baseline'">
+        <tr ng-repeat="aoc in selectedAttributeCategoryCombo.categoryOptionCombos" ng-if="aoc.dimensionType === 'target' || aoc.dimensionType === 'baseline'">
             <td class="col-sm-1 vertical-center">
                 {{aoc.displayName}}
             </td>
@@ -33,7 +33,7 @@
             <td class="col-sm-4">
                 <input multiple type="file"
                        file-upload="model.fileInput[aoc.id]"
-                       ng-disabled="aoc.btaDimensionType === 'actual' || !dataValues[selectedDataElement.id][selectedCategoryOptionCombo.id][aoc.id].value" />
+                       ng-disabled="aoc.dimensionType === 'actual' || !dataValues[selectedDataElement.id][selectedCategoryOptionCombo.id][aoc.id].value" />
                 <table class="small-vertical-spacing table table-bordered table-striped" ng-if="model.comment[aoc.id] && model.comment[aoc.id].attachment">
                     <thead>
                         <tr>

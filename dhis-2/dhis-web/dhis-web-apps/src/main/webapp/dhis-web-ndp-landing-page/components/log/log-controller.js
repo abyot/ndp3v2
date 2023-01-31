@@ -187,13 +187,13 @@ ndpFramework.controller('LOGController',
                             $scope.model.targetDimension = null;
                             $scope.model.baselineDimension = null;
                             angular.forEach(bta.options, function(op){
-                                if ( op.btaDimensionType === 'actual' ){
+                                if ( op.dimensionType === 'actual' ){
                                     $scope.model.actualDimension = op;
                                 }
-                                if ( op.btaDimensionType === 'target' ){
+                                if ( op.dimensionType === 'target' ){
                                     $scope.model.targetDimension = op;
                                 }
-                                if ( op.btaDimensionType === 'baseline' ){
+                                if ( op.dimensionType === 'baseline' ){
                                     $scope.model.baselineDimension = op;
                                 }
                             });

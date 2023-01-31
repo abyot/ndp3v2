@@ -183,7 +183,7 @@ var ndpTargetServices = angular.module('ndpTargetServices', ['ngResource'])
             }
 
             for(var i=0; i<categoryCombo.categoryOptionCombos.length; i++){
-                if(categoryCombo.categoryOptionCombos[i].btaDimensionType === 'target'){
+                if(categoryCombo.categoryOptionCombos[i].dimensionType === 'target'){
                     return true;
                 }
             }
@@ -361,8 +361,8 @@ var ndpTargetServices = angular.module('ndpTargetServices', ['ngResource'])
                                     if( _oco.hasAttachment ){
                                         oco.hasAttachment = _oco.hasAttachment;
                                     }
-                                    if( _oco.btaDimensionType ){
-                                        oco.btaDimensionType = _oco.btaDimensionType;
+                                    if( _oco.dimensionType ){
+                                        oco.dimensionType = _oco.dimensionType;
                                     }
                                 }
                             });

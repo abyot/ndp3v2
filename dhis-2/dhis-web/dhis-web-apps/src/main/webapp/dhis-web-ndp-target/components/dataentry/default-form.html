@@ -32,7 +32,7 @@
                         {{de.displayFormName}} <span ng-if="ocos.length > 1"> - {{oco.displayName}}</span>
                     </td>
                     <td class="vertical-center" ng-repeat="aoc in model.selectedAttributeCategoryCombo.categoryOptionCombos">
-                        <ng-form name="innerForm" ng-if="aoc.btaDimensionType !== 'actual'">
+                        <ng-form name="innerForm" ng-if="aoc.dimensionType !== 'actual'">
                             <span ng-if="de.optionSetValue">
                                 <ui-select theme="select2"
                                         ng-model="dataValues[de.id][oco.id][aoc.id].value"
@@ -216,7 +216,7 @@
                             <span ng-messages="innerForm.foo.$error" ng-if="interacted(innerForm.foo)" class="required" ng-messages-include="../dhis-web-commons/angular-forms/error-messages.html">
                             </span>
                         </ng-form>
-                        <span ng-if="aoc.btaDimensionType === 'actual'">
+                        <span ng-if="aoc.dimensionType === 'actual'">
                             {{dataValues[de.id][oco.id][aoc.id].value}}
                         </span>
                     </td>

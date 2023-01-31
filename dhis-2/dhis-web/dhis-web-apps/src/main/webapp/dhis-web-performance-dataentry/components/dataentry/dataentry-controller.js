@@ -120,7 +120,6 @@ ndpPerformanceDataEntry.controller('DataEntryController',
 
             $scope.model.periods = PeriodService.getPeriods( $scope.model.selectedDataSet.periodType, $scope.model.periodOffset,  $scope.model.selectedDataSet.openFuturePeriods );
 
-            console.log('the periods:  ', $scope.model.periods);
             if(!$scope.model.selectedDataSet.dataElements || $scope.model.selectedDataSet.dataElements.length < 1){
                 CommonUtils.notify('error', 'missing_data_elements_indicators');
                 return;
@@ -137,13 +136,13 @@ ndpPerformanceDataEntry.controller('DataEntryController',
             }
 
             angular.forEach($scope.model.selectedAttributeCategoryCombo.categoryOptionCombos, function(aoc){
-                if ( aoc.btaDimensionType === 'baseline' ){
+                if ( aoc.dimensionType === 'baseline' ){
                     $scope.model.baseline = aoc;
                 }
-                else if ( aoc.btaDimensionType === 'target' ){
+                else if ( aoc.dimensionType === 'target' ){
                     $scope.model.target = aoc;
                 }
-                else if ( aoc.btaDimensionType === 'actual' ){
+                else if ( aoc.dimensionType === 'actual' ){
                     $scope.model.actual = aoc;
                 }
             });
@@ -357,7 +356,7 @@ ndpPerformanceDataEntry.controller('DataEntryController',
         ModalService.showModal({}, modalOptions).then(function(result){
             var dsr = {completeDataSetRegistrations: []};
             angular.forEach($scope.model.selectedAttributeCategoryCombo.categoryOptionCombos, function(aoc){
-                if ( aoc.btaDimensionType === 'actual' ){
+                if ( aoc.dimensionType === 'actual' ){
                     dsr.completeDataSetRegistrations.push( {dataSet: $scope.model.selectedDataSet.id, organisationUnit: $scope.selectedOrgUnit.id, period: $scope.model.selectedPeriod.id, attributeOptionCombo: aoc.id} );
                 }
             });
@@ -387,7 +386,7 @@ ndpPerformanceDataEntry.controller('DataEntryController',
         ModalService.showModal({}, modalOptions).then(function(result){
 
             angular.forEach($scope.model.selectedAttributeCategoryCombo.categoryOptionCombos, function(aoc){
-                if ( aoc.btaDimensionType === 'actual' ){
+                if ( aoc.dimensionType === 'actual' ){
                     CompletenessService.delete($scope.model.selectedDataSet.id,
                         $scope.model.selectedPeriod.id,
                         $scope.selectedOrgUnit.id,

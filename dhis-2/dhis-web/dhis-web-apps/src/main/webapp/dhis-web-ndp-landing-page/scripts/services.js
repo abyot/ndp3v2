@@ -395,7 +395,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             }
 
             for(var i=0; i<categoryCombo.categoryOptionCombos.length; i++){
-                if(categoryCombo.categoryOptionCombos[i].btaDimensionType === 'target'){
+                if(categoryCombo.categoryOptionCombos[i].dimensionType === 'target'){
                     return true;
                 }
             }
@@ -949,7 +949,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
             var btaDimensions = {category: dataParams.bta.category};
             angular.forEach(dataParams.bta.options, function(op){
-               btaDimensions[op.id] = op.btaDimensionType;
+               btaDimensions[op.id] = op.dimensionType;
             });
 
             var reportPeriods = orderByFilter( dataParams.reportPeriods, '-id').reverse();
