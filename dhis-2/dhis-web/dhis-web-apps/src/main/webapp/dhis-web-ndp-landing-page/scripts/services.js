@@ -1247,10 +1247,10 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     
                     angular.forEach(degs.dataElementGroups, function(_deg){
                         var deg = dataParams.dataElementGroupsById[_deg.id];
-                        var deCount = 0;
-                        var pov = {};
-                        var povPercent = {};
-                        if ( deg && deg.dataElements && deg.dataElements.length > 0 ){                            
+                        if ( deg && deg.dataElements && deg.dataElements.length > 0 ){
+                            var deCount = 0;
+                            var pov = {};
+                            var povPercent = {};
                             angular.forEach(deg.dataElements, function(de){
                                 angular.forEach(de.categoryOptionCombos, function(oc){
                                     deCount++;
@@ -1348,16 +1348,16 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                     
                                 });                            
                             });                            
+                            var povTableRow = {
+                                dataElementSize: deCount,
+                                dataElementGroup: deg.displayName,
+                                dataElementGroupId: deg.id,
+                                dataElementGroupSet: degs.displayName,
+                                pov: pov,
+                                povPercent: povPercent
+                            };
+                            povTableRows.push( povTableRow );
                         }
-                        var povTableRow = {
-                            dataElementSize: deCount,
-                            dataElementGroup: deg.displayName,
-                            dataElementGroupId: deg.id,
-                            dataElementGroupSet: degs.displayName,
-                            pov: pov,
-                            povPercent: povPercent
-                        };
-                        povTableRows.push( povTableRow );
                     });
                 });
             }
