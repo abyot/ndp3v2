@@ -1728,8 +1728,11 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                             }
                         }
                     }                    
-                    if( tei.relationships && tei.relationships.length === 1 ){
-                        project.relationship = tei.relationships[0].to.trackedEntity;
+                    if( tei.relationships && tei.relationships.length > 0 ){
+                        project.relationships = [];
+                        angular.forEach(tei.relationships, function(r){
+                            project.relationships.push( r.to.trackedEntity );
+                        });
                     }
                     projects.push( project );
                 });
@@ -1740,28 +1743,32 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
             });
             return promise;
         },
-        getKpi: function( trackedEntityInstance, optionSets, attributesById, dataElementsById ){
-            var url = dhis2.ndp.apiUrl + '/trackedEntityInstances/' + trackedEntityInstance +'.json?fields=*';
+        getKpi: function( ids, optionSets, attributesById, dataElementsById ){
+            var url = dhis2.ndp.apiUrl + '/trackedEntityInstances.json?trackedEntityInstance=' + ids +'&fields=*';
             var promise = $http.get( url ).then(function(response){
-
-                var kpi = {};
-
-                if( response.data.enrollments && response.data.enrollments.length === 1 ){
-                    var events = response.data.enrollments[0].events;
-                    events = orderByFilter(events, '-eventDate');
-                    if( events[0] ){
-                        kpi.eventDate = DateUtils.formatFromApiToUser(events[0].eventDate);
-                        angular.forEach(events[0].dataValues, function(dv){
-                            var de = dataElementsById[dv.dataElement];
-                            var val = dv.value;
-                            if ( de ){
-                                val = CommonUtils.formatDataValue(events[0], val, de, optionSets, 'USER');
+                var kpis = [];
+                if( response.data.trackedEntityInstances && response.data.trackedEntityInstances.length > 1 ){
+                    angular.forEach(response.data.trackedEntityInstances, function(tei){
+                        if ( tei.enrollments && tei.enrollments[0] && tei.enrollments[0].events ){
+                            var kpi = {};
+                            var events = tei.enrollments[0].events;
+                            events = orderByFilter(events, '-eventDate');
+                            if( events[0] ){
+                                kpi.eventDate = DateUtils.formatFromApiToUser(events[0].eventDate);
+                                angular.forEach(events[0].dataValues, function(dv){
+                                    var de = dataElementsById[dv.dataElement];
+                                    var val = dv.value;
+                                    if ( de ){
+                                        val = CommonUtils.formatDataValue(events[0], val, de, optionSets, 'USER');
+                                    }
+                                    kpi[dv.dataElement] = val;
+                                });
                             }
-                            kpi[dv.dataElement] = val;
-                        });
-                    }
+                            kpis.push( kpi );
+                        }
+                    });
                 }
-                return kpi;
+                return kpis;
             }, function(response){
                 CommonUtils.errorNotifier(response);
             });

@@ -3,17 +3,15 @@
         <table>
             <thead>
                 <tr>
-                    <th>{{'description'| translate}}</th>
-                    <th>{{'value'| translate}}</th>
+                    <th ng-repeat="prstDe in model.kpiProgram.programStages[0].programStageDataElements" ng-if="prstDe.displayInReports">
+                        {{prstDe.dataElement.displayName}}
+                    </th>
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="prstDe in model.kpiProgram.programStages[0].programStageDataElements" ng-if="prstDe.displayInReports">
-                    <td>
-                        {{prstDe.dataElement.displayName}}
-                    </td>
-                    <td>
-                        {{model.projectKpi[prstDe.dataElement.id]}}
+                <tr ng-repeat="kpi in model.projectKpis">
+                    <td ng-repeat="prstDe in model.kpiProgram.programStages[0].programStageDataElements" ng-if="prstDe.displayInReports">
+                        {{kpi[prstDe.dataElement.id]}}
                     </td>
                 </tr>
             </tbody>

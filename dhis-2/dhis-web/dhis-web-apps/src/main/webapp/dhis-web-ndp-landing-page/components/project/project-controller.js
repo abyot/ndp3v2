@@ -134,14 +134,14 @@ ndpFramework.controller('ProjectController',
             
             $scope.model.selectedProject = project;
             $scope.model.showProjectDetails = true;
-            $scope.model.projectKpi = null;
-            if( !project.relationship ){
+            $scope.model.projectKpis = [];
+            if( !project.relationships ){
                 NotificationService.showNotifcationDialog($translate.instant("warning"), $translate.instant("missing_project_kpi"));
             }
 
-            if( project && project.relationship ){
-                ProjectService.getKpi( project.relationship, $scope.model.optionSetsById, $scope.model.attributesById , $scope.model.dataElementsById ).then(function( data ){
-                    $scope.model.projectKpi = data;                    
+            if( project && project.relationships ){
+                ProjectService.getKpi( project.relationships.join(';'), $scope.model.optionSetsById, $scope.model.attributesById , $scope.model.dataElementsById ).then(function( data ){
+                    $scope.model.projectKpis = data;
                 });
             }
         }
