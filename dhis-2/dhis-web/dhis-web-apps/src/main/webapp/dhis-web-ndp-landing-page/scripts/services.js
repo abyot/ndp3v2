@@ -1092,7 +1092,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                 }
 
                 if ( !ranges.green || !ranges.yellowStart || !ranges.yellowEnd || !ranges.red ){
-                    ranges = CommonUtils.getFixedRanges();
+                    ranges = CommonUtils.getFixedRanges( de.descendingIndicatorType );
                 }
 
                 if ( !dhis2.validation.isNumber( actual ) || ! dhis2.validation.isNumber( target ) ){
@@ -1112,17 +1112,34 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                         color = ranges.redColor;
                     }*/
                     var t = CommonUtils.getPercent( actual, target, true, true);
-                    if ( t >= ranges.green ){
-                        color = ranges.greenColor;
-                        style.printStyle = 'green-background';
+
+                    if ( de.descendingIndicatorType ){
+                        if ( t <= ranges.green ){
+                            color = ranges.greenColor;
+                            style.printStyle = 'green-background';
+                        }
+                        else if( t >= ranges.yellowStart && t <= ranges.yellowEnd ){
+                            color = ranges.yellowColor;
+                            style.printStyle = 'yellow-background';
+                        }
+                        else {
+                            color = ranges.redColor;
+                            style.printStyle = 'red-background';
+                        }
                     }
-                    else if( t >= ranges.yellowStart && t <= ranges.yellowEnd ){
-                        color = ranges.yellowColor;
-                        style.printStyle = 'yellow-background';
-                    }
-                    else {
-                        color = ranges.redColor;
-                        style.printStyle = 'red-background';
+                    else{
+                        if ( t >= ranges.green ){
+                            color = ranges.greenColor;
+                            style.printStyle = 'green-background';
+                        }
+                        else if( t >= ranges.yellowStart && t <= ranges.yellowEnd ){
+                            color = ranges.yellowColor;
+                            style.printStyle = 'yellow-background';
+                        }
+                        else {
+                            color = ranges.redColor;
+                            style.printStyle = 'red-background';
+                        }
                     }
                 }
 

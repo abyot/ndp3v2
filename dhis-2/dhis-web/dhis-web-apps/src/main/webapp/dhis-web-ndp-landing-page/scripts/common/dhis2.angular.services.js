@@ -685,7 +685,7 @@ var d2Services = angular.module('d2Services', ['ngResource'])
 
             return [ac, ma, na, nd];
         },
-        getFixedRanges: function(){
+        getFixedRanges: function( isDescending ){
             /*ranges = {
                 green: 15,
                 greenColor: '#339D73',
@@ -695,16 +695,32 @@ var d2Services = angular.module('d2Services', ['ngResource'])
                 red: 30,
                 redColor: '#CD615A'
             };*/
-            var ranges = {
-                green: 100,
-                greenColor: '#339D73',
-                yellowStart: 75,
-                yellowEnd: 99,
-                yellowColor: '#F4CD4D',
-                red: 74,
-                redColor: '#CD615A',
-                greyColor: '#aaa'
-            };
+            var ranges = {};
+
+            if ( isDescending ){
+                ranges = {
+                    green: 100,
+                    greenColor: '#339D73',
+                    yellowStart: 101,
+                    yellowEnd: 175,
+                    yellowColor: '#F4CD4D',
+                    red: 175,
+                    redColor: '#CD615A',
+                    greyColor: '#aaa'
+                };
+            }
+            else {
+                ranges = {
+                    green: 100,
+                    greenColor: '#339D73',
+                    yellowStart: 75,
+                    yellowEnd: 99,
+                    yellowColor: '#F4CD4D',
+                    red: 74,
+                    redColor: '#CD615A',
+                    greyColor: '#aaa'
+                };
+            }
             return ranges;
         },
         getFixedTrafficStyle: function(){
