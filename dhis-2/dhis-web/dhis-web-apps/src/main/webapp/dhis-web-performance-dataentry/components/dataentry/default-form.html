@@ -227,7 +227,7 @@
                                 value="{{getCommentValue(de.id, oco.id) | translate}}"
                                 class="form-control">
                             <span class="input-group-btn">
-                                <button ng-class="{'btn btn-primary': !dataValues[de.id][oco.id].hasComment, 'btn btn-danger': dataValues[de.id][oco.id].hasComment, }" type="button">
+                                <button ng-class="{'btn btn-danger': !dataValues[de.id][oco.id].hasComment, 'btn btn-primary': dataValues[de.id][oco.id].hasComment, }" type="button">
                                     <i class="fa fa-exclamation-triangle red" aria-hidden="true"></i>
                                 </button>
                             </span>
