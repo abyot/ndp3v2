@@ -54,7 +54,7 @@
                         </td>
                         <td ng-repeat="povh in model.performanceOverviewHeaders"
                             ng-init="povValue = row.povPercent[row.dataElementGroupId + '-' + povh.id + '-' + povh.period]">
-                            {{povValue}}<span ng-if="povValue">&nbsp; %</span>
+                            {{povValue}}<span ng-if="povValue">%</span>
                         </td>
                     </tr>
                 </tbody>
