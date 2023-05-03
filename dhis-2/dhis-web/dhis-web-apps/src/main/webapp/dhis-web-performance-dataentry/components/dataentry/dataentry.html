@@ -102,6 +102,12 @@
                 </div>
             </div>
             <div class="col-sm-5 blue-info-area add-small-left-padding">
+                <button type="button"
+                        class="long-vertical-spacing btn btn-success"
+                        ng-disabled="!model.selectedDataSet"
+                        ng-click="displayProgramInfo('NXT')">
+                    {{'show_program_description'| translate}}
+                </button>
             </div>
         </div>
         <!-- selection ends-->

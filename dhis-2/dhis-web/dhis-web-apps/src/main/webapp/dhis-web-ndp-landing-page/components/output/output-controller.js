@@ -17,7 +17,9 @@ ndpFramework.controller('OutputController',
         ResulstChainService,
         CommonUtils,
         DataValueService,
-        Analytics) {
+        Analytics,
+        ClusterDataService,
+        DateUtils) {
 
     $scope.model = {
         metaDataCached: false,
@@ -147,6 +149,10 @@ ndpFramework.controller('OutputController',
         $scope.model.selectedDataElementGroupSets = [];
     });
 
+    $scope.$watch('model.selectedCluster', function(){
+        $scope.resetDataView();
+    });
+    
     $scope.getBasePeriod = function(){
         $scope.model.basePeriod = null;
         var location = -1;
@@ -227,7 +233,11 @@ ndpFramework.controller('OutputController',
 
                         var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
 
+                        var today = DateUtils.getToday();
                         angular.forEach($scope.model.periods, function(pe){
+                            if ( pe.startDate <= today && pe.endDate >= today ){
+                                $scope.model.selectedFiscalYear = pe;
+                            }
                             if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
                                 $scope.model.selectedPeriods.push(pe);
                             }
@@ -264,7 +274,9 @@ ndpFramework.controller('OutputController',
 
     $scope.resetDataView = function(){
         $scope.model.data = null;
+        $scope.model.clusterData = null;
         $scope.model.reportReady = false;
+        $scope.model.clusterReportReady = false;
         $scope.model.dataExists = false;
         $scope.model.dataHeaders = [];
     };
@@ -435,6 +447,54 @@ ndpFramework.controller('OutputController',
                 });
             });
         });
+    };
+
+    $scope.getClusterData = function(){
+        
+        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
+            return;
+        }
+
+        if( !$scope.model.selectedCluster || !$scope.model.selectedCluster.options || !$scope.model.selectedCluster.options.length ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster"));
+            return;
+        }
+
+        if( !$scope.model.selectedFiscalYear ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_fiscal_year"));
+            return;
+        }
+
+        var params = {
+            indicatorGroupType: 'output',
+            selectedOrgUnit: $scope.selectedOrgUnit,
+            selectedCluster: $scope.model.selectedCluster,
+            selectedFiscalYear: $scope.model.selectedFiscalYear,            
+            allDataElementGroups: $scope.model.allDataElementGroups,
+            dataElementGroupSets: $scope.model.dataElementGroupSets,
+            bta: $scope.model.bta,
+            baseLineTargetActualDimensions: $scope.model.baseLineTargetActualDimensions,
+            actualDimension: $scope.model.actualDimension,
+            targetDimension: $scope.model.targetDimension,
+            baselineDimension: $scope.model.baselineDimension,
+            selectedDataElementGroupSets: $scope.model.clusterDataElementGroupSets,
+            selectedDataElementGroup: $scope.model.selectedKra,
+            dataElementsById: $scope.model.dataElementsById,
+            legendSetsById: $scope.model.legendSetsById,
+            defaultLegendSet: $scope.model.defaultLegendSet,
+            performanceOverviewHeaders: $scope.model.clusterPerformanceOverviewHeaders            
+        };
+
+        $scope.model.clusterReportReady = false;
+        $scope.model.clusterReportStarted = true;
+        ClusterDataService.getData( params ).then(function(result){
+            $scope.model.clusterReportReady = true;
+            $scope.model.clusterReportStarted = false;
+            $scope.model.clusterData = result.clusterData;
+            $scope.model.hasClusterData = result.hasClusterData;
+            $scope.model.clusterPerformanceOverviewHeaders = result.clusterPerformanceOverviewHeaders;
+        });        
     };
 
     $scope.showOrgUnitTree = function(){

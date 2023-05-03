@@ -13,9 +13,6 @@
                         <th class="center sticky" colspan="{{period.colSpan}}" ng-repeat="period in model.reportPeriods" ng-if="period.hasData">
                             {{period.displayName}}
                         </th>
-                        <th rowspan="2" class="vertical-center sticky">
-                            {{'vision_2040_target' | translate}}
-                        </th>
                     </tr>
                     <tr>
                         <th class="sticky">{{'goal'| translate}}</th>
@@ -42,10 +39,6 @@
                             ng-style="row.styles[dh.dimensionId + '.' + dh.periodId].trafficLight"
                             ng-class="row.styles[dh.dimensionId + '.' + dh.periodId].printStyle">
                             {{row.values[dh.dimensionId + '.' + dh.periodId]}}
-                            {{row.styles[dh.dimensionId + '.' + dh.periodId].trafficLight}}
-                        </td>
-                        <td>
-                            {{row.vision2040}}
                         </td>
                     </tr>
                 </tbody>

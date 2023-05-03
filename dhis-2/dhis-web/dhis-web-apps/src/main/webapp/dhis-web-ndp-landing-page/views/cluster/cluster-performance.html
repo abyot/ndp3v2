@@ -5,13 +5,24 @@
             <table>
                 <thead>
                     <tr>
-                        <th class="sticky">{{'programme'| translate}}</th>
+                        <th class="sticky">{{'programmes'| translate}}</th>
+                        <th class="sticky">{{'indicators'| translate}}</th>
+                        <th class="center sticky"
+                            ng-style="header.style"
+                            ng-class="header.printStyle"
+                            ng-repeat="header in model.clusterPerformanceOverviewHeaders">
+                            {{header.id}}
+                        </th>
                     </tr>
                 </thead>
-                <tbody ng-repeat="pr in model.selectedCluster.options| orderBy: ['code']">
+                <tbody ng-repeat="pr in model.selectedCluster.options | orderBy: ['code']">
                     <tr>
                         <td>
                             {{pr.displayName}}
+                        </td>
+                        <td>{{model.clusterData[pr.code].size}}</td>
+                        <td ng-repeat="header in model.clusterPerformanceOverviewHeaders">
+                            {{model.clusterData[pr.code][header.id].pcnt}}
                         </td>
                     </tr>
                 </tbody>

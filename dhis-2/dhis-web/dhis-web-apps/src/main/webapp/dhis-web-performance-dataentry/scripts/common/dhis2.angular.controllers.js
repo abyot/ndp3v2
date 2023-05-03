@@ -600,5 +600,19 @@ var d2Controllers = angular.module('d2Controllers', [])
 })
 
 .controller('CANMenuController', function($scope, CommonUtils) {
-	$scope.icons = CommonUtils.getIcons();
+    $scope.icons = CommonUtils.getIcons();
+})
+
+.controller('ProgramInfoController', function($scope, $modalInstance, CommonUtils, programmes) {
+    
+    if ( !programmes || !programmes.ndp || !programmes.isNDPProgramme || !programmes.options || !programmes.options.length ){
+        CommonUtils.notify('error', 'missing_data_elements_indicators');
+        return;
+    }
+    
+    $scope.model = {programmes: programmes.options};    
+    
+    $scope.close = function(){
+        $modalInstance.close();
+    };
 });

@@ -37,4 +37,56 @@ var ndpTargetFilters = angular.module('ndpTargetFilters', [])
             });
         }
     };
+})
+
+.filter('getFirst', function(){
+    return function(data, obj){
+        if(!data ){
+            return;
+        }
+        if(!obj){
+            return data;
+        }
+        else{
+            var res = data.filter(function(item){
+                var match = true;
+                for( var k in obj ){
+                    match = match && item[k] === obj[k];
+                    if( !match ){
+                        return match;
+                    }
+                }
+                return match;
+            });
+            if(res && res.length > 0){
+                return res[0];
+            }
+            return null;
+        }
+    };
+})
+
+.filter('startsWith', function(){
+    return function(data, obj){
+        if(!data ){
+            return;
+        }
+        if(!obj){
+            return data;
+        }
+        else{
+            return data.filter(function(item){
+                var match = true;
+                for( var k in obj ){
+                    if ( item[k] && obj && obj[k] ){
+                        match = match && item[k].toLowerCase().indexOf(obj[k].toLowerCase()) === 0;
+                    }
+                    if( !match ){
+                        return match;
+                    }
+                }
+                return match;
+            });
+        }
+    };
 });

@@ -17,7 +17,9 @@ ndpFramework.controller('OutcomeController',
         Analytics,
         CommonUtils,
         DataValueService,
-        FinancialDataService) {
+        FinancialDataService,
+        ClusterDataService,
+        DateUtils) {
 
     $scope.model = {
         metaDataCached: false,
@@ -96,6 +98,10 @@ ndpFramework.controller('OutcomeController',
                 $scope.getOutcomes();
             }
         }
+    });
+
+    $scope.$watch('model.selectedCluster', function(){
+        $scope.resetDataView();
     });
 
     $scope.getBasePeriod = function(){
@@ -184,8 +190,11 @@ ndpFramework.controller('OutcomeController',
                                     $scope.model.periods = periods;
                                     
                                     var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
-
+                                    var today = DateUtils.getToday();
                                     angular.forEach($scope.model.periods, function(pe){
+                                        if ( pe.startDate <= today && pe.endDate >= today ){
+                                            $scope.model.selectedFiscalYear = pe;
+                                        }
                                         if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
                                             $scope.model.selectedPeriods.push(pe);
                                         }
@@ -232,7 +241,9 @@ ndpFramework.controller('OutcomeController',
 
     $scope.resetDataView = function(){
         $scope.model.data = null;
+        $scope.model.clusterData = null;
         $scope.model.reportReady = false;
+        $scope.model.clusterReportReady = false;
         $scope.model.dataExists = false;
         $scope.model.dataHeaders = [];
     };
@@ -366,26 +377,53 @@ ndpFramework.controller('OutcomeController',
             });
         }
     };
-
+    
     $scope.getClusterData = function(){
-        $scope.model.clusterReportReady = true;
-        $scope.model.hasClusterData = true;
-        var clusterGroups = [];
-        angular.forEach($scope.model.selectedCluster.options, function(op){
-            var filter = {ndpProgramme: op.code};
-            var degss = $filter('filter')($scope.model.dataElementGroupSets, filter, true);
-            angular.forEach(degss, function(degs){
-                angular.forEach(degs.dataElementGroups, function(deg){
-                    var _deg = $filter('filter')($scope.model.allDataElementGroups, {indicatorGroupType: 'outcome', id: deg.id}, true);
-                    if ( _deg.length > 0 ){
-                        clusterGroups.push( _deg[0] );
-                    }
-                });
-            });
-        });
-        console.log('dataElementsById:  ', $scope.model.dataElementsById);
-        clusterGroups = orderByFilter( clusterGroups, '-code').reverse();
-        console.log('clusterOutcomes:  ', clusterGroups);
+        
+        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
+            return;
+        }
+
+        if( !$scope.model.selectedCluster || !$scope.model.selectedCluster.options || !$scope.model.selectedCluster.options.length ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster"));
+            return;
+        }
+
+        if( !$scope.model.selectedFiscalYear ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_fiscal_year"));
+            return;
+        }
+
+        var params = {
+            indicatorGroupType: 'outcome',
+            selectedOrgUnit: $scope.selectedOrgUnit,
+            selectedCluster: $scope.model.selectedCluster,
+            selectedFiscalYear: $scope.model.selectedFiscalYear,            
+            allDataElementGroups: $scope.model.allDataElementGroups,
+            dataElementGroupSets: $scope.model.dataElementGroupSets,
+            bta: $scope.model.bta,
+            baseLineTargetActualDimensions: $scope.model.baseLineTargetActualDimensions,
+            actualDimension: $scope.model.actualDimension,
+            targetDimension: $scope.model.targetDimension,
+            baselineDimension: $scope.model.baselineDimension,
+            selectedDataElementGroupSets: $scope.model.clusterDataElementGroupSets,
+            selectedDataElementGroup: $scope.model.selectedKra,
+            dataElementsById: $scope.model.dataElementsById,
+            legendSetsById: $scope.model.legendSetsById,
+            defaultLegendSet: $scope.model.defaultLegendSet,
+            performanceOverviewHeaders: $scope.model.clusterPerformanceOverviewHeaders            
+        };
+
+        $scope.model.clusterReportReady = false;
+        $scope.model.clusterReportStarted = true;
+        ClusterDataService.getData( params ).then(function(result){
+            $scope.model.clusterReportReady = true;
+            $scope.model.clusterReportStarted = false;
+            $scope.model.clusterData = result.clusterData;
+            $scope.model.hasClusterData = result.hasClusterData;
+            $scope.model.clusterPerformanceOverviewHeaders = result.clusterPerformanceOverviewHeaders;
+        });        
     };
     
     $scope.showOrgUnitTree = function(){

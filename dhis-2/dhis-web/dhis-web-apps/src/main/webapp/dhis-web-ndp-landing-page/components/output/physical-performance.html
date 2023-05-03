@@ -17,7 +17,7 @@
                     <tr>
                         <th class="sticky">{{'sub_interventions'| translate}}</th>
                         <th class="sticky">{{'outputs'| translate}}</th>
-                        <th class="sticky">{{'indicator'| translate}}</th>
+                        <th class="sticky">{{'indicators'| translate}}</th>
                         <th class="center sticky" ng-repeat="header in model.dataHeaders">
                             {{model.metaData.items[header.dimensionId].name}}
                         </th>
@@ -39,7 +39,6 @@
                             ng-style="row.styles[dh.dimensionId + '.' + dh.periodId].trafficLight"
                             ng-class="row.styles[dh.dimensionId + '.' + dh.periodId].printStyle">
                             {{row.values[dh.dimensionId + '.' + dh.periodId]}}
-                            {{row.styles[dh.dimensionId + '.' + dh.periodId].trafficLight}}
                         </td>
                     </tr>
                 </tbody>

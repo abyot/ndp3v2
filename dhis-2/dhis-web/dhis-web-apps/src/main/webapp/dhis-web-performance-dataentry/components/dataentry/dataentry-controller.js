@@ -55,6 +55,7 @@ ndpPerformanceDataEntry.controller('DataEntryController',
                         $scope.model.optionSetsById[op.id] = op;
                     });
 
+                    $scope.model.programmes = $filter('getFirst')(opts, {ndp: 'NDPIII', isNDPProgramme: true});
                     MetaDataFactory.getAll('categoryCombos').then(function(ccs){
                         angular.forEach(ccs, function(cc){
                             $scope.model.categoryCombosById[cc.id] = cc;
@@ -333,6 +334,11 @@ ndpPerformanceDataEntry.controller('DataEntryController',
         });
     };
 
+    $scope.isAllowedDimension = function( aoc ){
+        var notAllowed = ['target', 'baseline', 'planned'];
+        return notAllowed.indexOf(aoc.dimensionType) === -1;
+    };
+
     $scope.isDisabled = function( aoc ){
         return !aoc.dWrite || $scope.model.dataSetCompleteness;
     };
@@ -489,6 +495,23 @@ ndpPerformanceDataEntry.controller('DataEntryController',
 
         modalInstance.result.then(function( dataValues ) {
             $scope.dataValues = dataValues;
+        });
+    };
+    
+    $scope.displayProgramInfo = function(){
+        var programmes = $scope.model.programmes;
+        var modalInstance = $modal.open({
+            templateUrl: 'components/dataentry/program-info.html',
+            controller: 'ProgramInfoController',
+            windowClass: 'info-modal-window',
+            resolve: {
+                programmes: function(){
+                    return programmes;
+                }
+            }
+        });
+
+        modalInstance.result.then(function() {
         });
     };
 });

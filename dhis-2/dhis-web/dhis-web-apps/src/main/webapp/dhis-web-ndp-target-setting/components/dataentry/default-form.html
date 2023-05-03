@@ -27,8 +27,8 @@
                         {{de.displayFormName}} <span ng-if="ocos.length > 1"> - {{oco.displayName}}</span>
                     </td>
                     <td class="vertical-center" ng-repeat="aoc in model.selectedAttributeCategoryCombo.categoryOptionCombos">
-                        <ng-form name="innerForm" ng-if="aoc.dimensionType === 'target' || aoc.dimensionType === 'baseline'">
-                            <span ng-if="de.optionSetValue">
+            <ng-form name="innerForm" ng-if="isAllowedDimension(aoc)">
+                <span ng-if="de.optionSetValue">
                                 <ui-select theme="select2"
                                         ng-model="dataValues[de.id][oco.id][aoc.id].aggregateValue"
                                         ng-disabled="isDisabled(aoc)"
@@ -221,8 +221,10 @@
                                 value="{{getCommentValue(de.id, oco.id) | translate}}"
                                 class="form-control">
                             <span class="input-group-btn">
-                                <button ng-class="{'btn btn-danger': !dataValues[de.id][oco.id].hasComment, 'btn btn-primary': dataValues[de.id][oco.id].hasComment, }" type="button">
-                                    <i class="fa fa-exclamation-triangle red" aria-hidden="true"></i>
+                                <button ng-class="{'btn btn-danger': !dataValues[de.id][oco.id].hasComment, 'btn btn-primary': dataValues[de.id][oco.id].hasComment, }"
+                                        title="{{'explanation_attachment'| translate}}"
+                                        type="button">
+                                    <i class="fa fa-paperclip red" aria-hidden="true"></i>
                                 </button>
                             </span>
                         </div>

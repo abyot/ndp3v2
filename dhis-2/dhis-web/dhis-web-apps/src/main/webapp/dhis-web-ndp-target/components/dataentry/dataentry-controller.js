@@ -336,6 +336,11 @@ ndpDataEntry.controller('DataEntryController',
         });
     };
 
+    $scope.isAllowedDimension = function( aoc ){
+        var allowed = ['target', 'baseline', 'planned'];
+        return allowed.indexOf(aoc.dimensionType) !== -1;
+    };
+
     $scope.isDisabled = function( aoc ){
         return !aoc.dWrite || $scope.model.dataSetCompleteness;
     };
