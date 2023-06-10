@@ -23,25 +23,11 @@
                             ng-style="header.style"
                             ng-class="header.printStyle"
                             ng-repeat="header in model.performanceOverviewHeaders">
-                            {{header.id}}
+                            {{header.id}}<br>%
                         </th>
                     </tr>
                 </thead>
                 <tbody ng-repeat="row in model.povTableRows">
-                    <!--<tr>
-                        <td>
-                            {{row.dataElementGroupSet}}
-                        </td>
-                        <td>
-                            {{row.dataElementGroup}}
-                        </td>
-                        <td>
-                            {{row.dataElementSize}}
-                        </td>
-                        <td ng-repeat="povh in model.performanceOverviewHeaders">
-                            {{row.pov[row.dataElementGroupId + '-' + povh.id + '-' + povh.period]}}
-                        </td>
-                    </tr>-->
                     <tr>
                         <td>
                             {{row.dataElementGroupSet}}
@@ -54,7 +40,7 @@
                         </td>
                         <td ng-repeat="povh in model.performanceOverviewHeaders"
                             ng-init="povValue = row.povPercent[row.dataElementGroupId + '-' + povh.id + '-' + povh.period]">
-                            {{povValue}}<span ng-if="povValue">%</span>
+                            {{povValue}}
                         </td>
                     </tr>
                 </tbody>
