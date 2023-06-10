@@ -12,7 +12,7 @@
     </action>
   </package>
 
-  <package name="dhis-web-ndp-landing-page" extends="dhis-web-commons" namespace="/dhis-web-ndp-landing-page">
+    <package name="dhis-web-results-framework" extends="dhis-web-commons" namespace="/dhis-web-results-framework">
         <action name="index" class="org.hisp.dhis.commons.action.NoAction">
             <result name="success" type="redirect">index.html</result>
         </action>
