@@ -19,11 +19,12 @@
                         <th class="sticky">{{model.selectedMenu.ndp}} {{'objectives'| translate}}</th>
                         <th>{{'kras'| translate}}</th>
                         <th>{{'indicators'| translate}}</th>
-                        <th class="center sticky"
+                        <th class="center sticky pov-cell-width"
                             ng-style="header.style"
                             ng-class="header.printStyle"
                             ng-repeat="header in model.performanceOverviewHeaders">
-                            {{header.id}}<br>%
+                            {{header.id}}
+                            <br>%
                         </th>
                     </tr>
                 </thead>

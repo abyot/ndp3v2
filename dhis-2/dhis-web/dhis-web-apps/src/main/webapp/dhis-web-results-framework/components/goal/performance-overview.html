@@ -3,7 +3,7 @@
     <div ng-if="model.hasPhysicalPerformanceData">
         <div ng-include="'views/performance-overview-header.html'"></div>
         <div id="performance_overview" class="col-sm-12 table-scroll">
-            <table class="table-striped">
+            <table>
                 <thead>
                     <tr>
                         <th class="sticky"></th>
@@ -19,11 +19,12 @@
                         <th class="sticky">{{'goal'| translate}}</th>
                         <th class="sticky">{{'kras'| translate}}</th>
                         <th class="sticky">{{'indicators'| translate}}</th>
-                        <th class="center sticky"
+                        <th class="center sticky pov-cell-width"
                             ng-style="header.style"
                             ng-class="header.printStyle"
                             ng-repeat="header in model.performanceOverviewHeaders">
-                            {{header.id}}<br>%
+                            {{header.id}}
+                            <br>%
                         </th>
                     </tr>
                 </thead>

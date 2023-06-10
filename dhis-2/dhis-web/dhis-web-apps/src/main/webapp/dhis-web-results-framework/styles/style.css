@@ -723,3 +723,8 @@ ul.tree ul li:last-child:before {
 .lib-menu {
     color: #923a62 !important;
 }
+
+.pov-cell-width {
+    max-width: 50px;
+    min-width: 50px;
+}
