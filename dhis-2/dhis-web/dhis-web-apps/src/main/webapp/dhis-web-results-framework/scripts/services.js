@@ -315,12 +315,16 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                     }
                                 }
 
-                                var budgetDimension = null;
+                                var plannedDimension = null;
+                                var approvedDimension = null;
                                 var releaseDimension = null;
                                 var spentDimension = null;
                                 angular.forEach(dimension.options, function (op) {
-                                    if (op.dimensionType === 'budget') {
-                                        budgetDimension = op;
+                                    if (op.dimensionType === 'planned') {
+                                        plannedDimension = op;
+                                    }
+                                    if (op.dimensionType === 'approved') {
+                                        approvedDimension = op;
                                     }
                                     if (op.dimensionType === 'release') {
                                         releaseDimension = op;
@@ -331,7 +335,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 });
 
                                 $rootScope.$apply(function () {
-                                    def.resolve({bsr: dimension, budget: budgetDimension, release: releaseDimension, spent: spentDimension});
+                                    def.resolve({bsr: dimension, planned: plannedDimension, approved: approvedDimension, release: releaseDimension, spent: spentDimension});
                                 });
                             });
                         });
@@ -1012,7 +1016,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                             pe: header.periodId,
                             co: oc
                         };
-                        filterParams[dataParams.bsr.category] = dataParams.budgetDimension.id;
+                        filterParams[dataParams.bsr.category] = dataParams.plannedDimension.id;
 
                         var res = $filter('dataFilter')(data, filterParams)[0];
                         return res && res.value ? res.value : '';
@@ -1161,7 +1165,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                     dimension: dataParams.bsr.category});
                             });
 
-                            //budget-release-spent-percentage headers
+                            //budget-planned-released-spent-percentage headers
                             colSpan++;
                             dataHeaders.push({
                                 name: $translate.instant('budget_released'),
@@ -1169,7 +1173,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 periodId: pe.id,
                                 periodStart: pe.startDate,
                                 periodEnd: pe.endDate,
-                                denDimensionId: dataParams.budgetDimension.id,
+                                denDimensionId: dataParams.plannedDimension.id,
                                 numDimensionId: dataParams.releaseDimension.id,
                                 dimension: dataParams.bsr.category});
 
@@ -1180,7 +1184,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 periodId: pe.id,
                                 periodStart: pe.startDate,
                                 periodEnd: pe.endDate,
-                                denDimensionId: dataParams.budgetDimension.id,
+                                denDimensionId: dataParams.releaseDimension.id,
                                 numDimensionId: dataParams.spentDimension.id,
                                 dimension: dataParams.bsr.category});
 
@@ -1274,8 +1278,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
                                             angular.forEach(dataHeaders, function (dh) {
                                                 if (dataParams.displayActionBudgetData) {
-                                                    if (dh.dimensionId === dataParams.budgetDimension.id)
-                                                    {
+                                                    if (dh.dimensionId === dataParams.plannedDimension.id) {
                                                         dh.hasBudgetData = true;
                                                     }
 
