@@ -28,7 +28,7 @@
                     </tr>
                     <tr>
                         <th class="sticky">{{'sub_interventions'| translate}}</th>
-                        <th class="center sticky" ng-repeat="header in model.dataHeaders">
+                        <th class="center sticky" ng-repeat="header in model.dataHeaders" ng-if="header.isRowData">
                             {{model.metaData.items[header.dimensionId].name}}
                         </th>
                     </tr>
@@ -38,7 +38,7 @@
                         <td>
                             {{objective.displayName}}
                         </td>
-                        <td class="center" ng-repeat="header in model.dataHeaders">
+                        <td class="center" ng-repeat="header in model.dataHeaders" ng-if="header.isRowData">
                             {{getCoverage(objective['available'][header.periodId + '-' + header.dimensionId], objective['expected'][header.periodId + '-' + header.dimensionId])}}
                         </td>
                     </tr>
