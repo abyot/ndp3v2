@@ -7,6 +7,7 @@ ndpFramework.controller('ActionOutputController',
         $translate,
         $modal,
         $filter,
+        DateUtils,
         orderByFilter,
         NotificationService,
         SelectedMenuService,
@@ -50,7 +51,6 @@ ndpFramework.controller('ActionOutputController',
 
     $scope.model.horizontalMenus = [
         {id: 'financialPerformance', title: 'financial_performance', order: 1, view: 'components/action/financial-performance.html', class: 'main-horizontal-menu'},
-        {id: 'budgetPerformance', title: 'financial_performance', order: 1, view: 'components/action/financial-performance.html', class: 'main-horizontal-menu'},
         {id: 'clusterPerformance', title: 'cluster_performance', order: 2, view: 'components/action/cluster-performance.html', class: 'main-horizontal-menu'},
         {id: 'completeness', title: 'completeness', order: 3, view: 'components/action/completeness.html', class: 'main-horizontal-menu'}
     ];
@@ -211,14 +211,15 @@ ndpFramework.controller('ActionOutputController',
 
                         OptionComboService.getBsrDimensions().then(function( bsrResponse ){
 
-                            if( !bsrResponse || !bsrResponse.bsr || !bsrResponse.budget || !bsrResponse.spent || !bsrResponse.release ){
+                            if( !bsrResponse || !bsrResponse.bsr || !bsrResponse.planned || !bsrResponse.approved || !bsrResponse.spent || !bsrResponse.release ){
                                 NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bsr_dimensions"));
                                 return;
                             }
 
                             $scope.model.bsr = bsrResponse.bsr;
                             $scope.model.budgetSpentReleaseDimensions = $.map($scope.model.bsr.options, function(d){return d.id;});
-                            $scope.model.budgetDimension = bsrResponse.budget;
+                            $scope.model.plannedDimension = bsrResponse.planned;
+                            $scope.model.approvedDimension = bsrResponse.approved;
                             $scope.model.spentDimension = bsrResponse.spent;
                             $scope.model.releaseDimension = bsrResponse.release;
 
@@ -237,11 +238,23 @@ ndpFramework.controller('ActionOutputController',
                                         $scope.model.dataElementGroupSets = dataElementGroupSets;
 
                                         var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
+                                        periods = periods.reverse();
                                         $scope.model.allPeriods = angular.copy( periods );
                                         $scope.model.periods = periods;
 
                                         var selectedPeriodNames = ['2020/21'];
+                                        var today = DateUtils.getToday();
+                                        $scope.model.selectedFiscalYear = '';
+                                        angular.forEach($scope.model.periods, function(pe){
+                                            if ( pe.startDate <= today && pe.endDate <= today ){
+                                                $scope.model.selectedFiscalYear = pe;
+                                            }
+                                        });
 
+                                        if ( $scope.model.selectedFiscalYear ){
+                                            selectedPeriodNames = [$scope.model.selectedFiscalYear.displayName];
+                                        }
+q
                                         angular.forEach($scope.model.periods, function(pe){
                                             if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
                                                $scope.model.selectedPeriods.push(pe);
@@ -303,6 +316,8 @@ ndpFramework.controller('ActionOutputController',
         });
 
         $scope.model.periods = Object.values( periodsById );
+
+        $scope.model.periods = $scope.model.periods.reverse();
 
         $scope.model.allPeriods = angular.copy( $scope.model.periods );
     };
@@ -380,7 +395,8 @@ ndpFramework.controller('ActionOutputController',
                         targetDimension: $scope.model.targetDimension,
                         baselineDimension: $scope.model.baselineDimension,
                         bsr: $scope.model.bsr,
-                        budgetDimension: $scope.model.budgetDimension,
+                        plannedDimension: $scope.model.plannedDimension,
+                        approvedDimension: $scope.model.approvedDimension,
                         spentDimension: $scope.model.spentDimension,
                         releaseDimension: $scope.model.releaseDimension,
                         selectedDataElementGroupSets: $scope.model.selectedDataElementGroupSets,
@@ -397,6 +413,7 @@ ndpFramework.controller('ActionOutputController',
                     };
 
                     var processedData = Analytics.processData( dataParams );
+
                     $scope.model.dataHeaders = processedData.dataHeaders;
                     $scope.model.reportPeriods = processedData.reportPeriods;
                     $scope.model.dataExists = processedData.dataExists;
@@ -525,7 +542,7 @@ ndpFramework.controller('ActionOutputController',
     };
 
     $scope.getCoverage = function(numerator, denominator){
-        return CommonUtils.getPercent(numerator, denominator, false);
+        return CommonUtils.getPercent(numerator, denominator, true, true);
     };
     
     $scope.getBudgetPercentage = function( value, dimension){
@@ -535,7 +552,7 @@ ndpFramework.controller('ActionOutputController',
         
         var num = value[dimension.numDimensionId + '.' + dimension.periodId];
         var den = value[dimension.denDimensionId + '.' + dimension.periodId];        
-        return CommonUtils.getPercent(num, den, true);
+        return CommonUtils.getPercent(num, den, true, true);
     };
 
 });
