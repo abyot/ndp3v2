@@ -254,7 +254,7 @@ ndpFramework.controller('ActionOutputController',
                                         if ( $scope.model.selectedFiscalYear ){
                                             selectedPeriodNames = [$scope.model.selectedFiscalYear.displayName];
                                         }
-q
+
                                         angular.forEach($scope.model.periods, function(pe){
                                             if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
                                                $scope.model.selectedPeriods.push(pe);
