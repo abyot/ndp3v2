@@ -433,11 +433,12 @@ var d2Services = angular.module('d2Services', ['ngResource'])
         getPercent: function(op1, op2, turnOffPercent, turnOffDecimal ){
             op1 = dhis2.validation.isNumber(op1) ? parseFloat(op1) : 0;
             op2 = dhis2.validation.isNumber(op2) ? parseFloat(op2) : 0;
+            if( op2 === 0 ){
+                return '';
+            }
+
             if( op1 === 0){
                 return turnOffPercent ? 0 : '0%';
-            }
-            if( op2 === 0 ){
-                return $translate.instant('missing_target');
             }
 
             var res = (parseFloat(op1 / op2)*100);
@@ -772,6 +773,31 @@ var d2Services = angular.module('d2Services', ['ngResource'])
             }
             style.inlineStyle = {"background-color": color};
             return style;
+        },
+        getFormattedAnalyticsResponse: function( response ){
+            var data = response.data;
+            var reportData = [];
+            if (data && data.headers && data.headers.length > 0 && data.rows && data.rows.length > 0) {
+                for (var i = 0; i < data.rows.length; i++) {
+                    var r = {}, d = data.rows[i];
+                    for (var j = 0; j < data.headers.length; j++) {
+
+                        if (data.headers[j].name === 'numerator' || data.headers[j].name === 'denominator') {
+                            d[j] = parseInt(d[j]);
+                        } else if (data.headers[j].name === 'value') {
+                            d[j] = parseFloat(d[j]);
+                        }
+
+                        r[data.headers[j].name] = d[j];
+                    }
+
+                    delete r.multiplier;
+                    delete r.factor;
+                    delete r.divisor;
+                    reportData.push(r);
+                }
+            }
+            return {data: reportData, metaData: data.metaData};
         }
     };
 })

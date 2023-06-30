@@ -890,34 +890,36 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     }
 
                 },
+                getDataInBatch: function( url, items ){
+                    var def = $q.defer(), promises = [], batches = dhis2.metadata.chunk( items, 200 );
+
+                    angular.forEach(batches, function(batch){
+                        var u = dhis2.ndp.apiUrl + '/analytics?' + encodeURI(url);
+                        promises.push( $http.get( u + '&dimension=dx:' + batch.join(';')) );
+                    });
+
+                    $q.all(promises).then(function( response ){
+                        var result = {};
+                        for (var i = 0; i < response.length; i++) {
+                            var r = CommonUtils.getFormattedAnalyticsResponse( response[i] );
+                            if( i === 0 ){
+                                Object.assign(result, r );
+                            }
+                            else{
+                                result.metaData.dimensions.dx.push( r.metaData.dimensions.dx );
+                                Object.assign(result.metaData.items, r.metaData.items);
+                                result.data.push(...r.data );
+                            }
+                        }
+                        def.resolve( result );
+                    });
+                    return def.promise;
+                },
                 getData: function (url) {
                     if (url) {
                         url = dhis2.ndp.apiUrl + '/analytics?' + encodeURI(url);
                         var promise = $http.get(url).then(function (response) {
-
-                            var data = response.data;
-                            var reportData = [];
-                            if (data && data.headers && data.headers.length > 0 && data.rows && data.rows.length > 0) {
-                                for (var i = 0; i < data.rows.length; i++) {
-                                    var r = {}, d = data.rows[i];
-                                    for (var j = 0; j < data.headers.length; j++) {
-
-                                        if (data.headers[j].name === 'numerator' || data.headers[j].name === 'denominator') {
-                                            d[j] = parseInt(d[j]);
-                                        } else if (data.headers[j].name === 'value') {
-                                            d[j] = parseFloat(d[j]);
-                                        }
-
-                                        r[data.headers[j].name] = d[j];
-                                    }
-
-                                    delete r.multiplier;
-                                    delete r.factor;
-                                    delete r.divisor;
-                                    reportData.push(r);
-                                }
-                            }
-                            return {data: reportData, metaData: data.metaData};
+                            return CommonUtils.getFormattedAnalyticsResponse( response );
                         }, function (response) {
                             CommonUtils.errorNotifier(response);
                             return response.data;
@@ -1112,7 +1114,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                              color = ranges.redColor;
                              }*/
                             var t = CommonUtils.getPercent(actual, target, true, true);
-
+                            t = Number(t);
                             if (de.descendingIndicatorType) {
                                 if (t <= ranges.green) {
                                     color = ranges.greenColor;
@@ -1137,7 +1139,6 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 }
                             }
                         }
-
                         style.inlineStyle = {"background-color": color};
                         return style;
                     };
@@ -1175,6 +1176,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 periodEnd: pe.endDate,
                                 denDimensionId: dataParams.plannedDimension.id,
                                 numDimensionId: dataParams.releaseDimension.id,
+                                dimensionId: dataParams.plannedDimension.id + '.' + dataParams.releaseDimension.id,
                                 dimension: dataParams.bsr.category});
 
                             colSpan++;
@@ -1184,8 +1186,9 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 periodId: pe.id,
                                 periodStart: pe.startDate,
                                 periodEnd: pe.endDate,
-                                denDimensionId: dataParams.releaseDimension.id,
+                                denDimensionId: dataParams.plannedDimension.id,
                                 numDimensionId: dataParams.spentDimension.id,
+                                dimensionId: dataParams.plannedDimension.id + '.' + dataParams.spentDimension.id,
                                 dimension: dataParams.bsr.category});
 
                             colSpan++;
@@ -1197,6 +1200,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 periodEnd: pe.endDate,
                                 denDimensionId: dataParams.releaseDimension.id,
                                 numDimensionId: dataParams.spentDimension.id,
+                                dimensionId: dataParams.releaseDimension.id + '.' + dataParams.spentDimension.id,
                                 dimension: dataParams.bsr.category});
                         } else {
                             angular.forEach(baseLineTargetActualDimensions, function (dm) {
@@ -1275,22 +1279,58 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                                 styles: {}
                                             };
                                             tableRows.push(tableRow);
-
                                             angular.forEach(dataHeaders, function (dh) {
                                                 if (dataParams.displayActionBudgetData) {
                                                     if (dh.dimensionId === dataParams.plannedDimension.id) {
                                                         dh.hasBudgetData = true;
                                                     }
-
                                                     if (dh.isRowData) {
                                                         var bVal = filterBudgetData(dh, de.id, oc.id, data);
-                                                        var trafficLight = "";
-                                                        if (dh.dimensionId === dataParams.actualDimension.id) {
-                                                            var budgetValue = filterBudgetValueData(dh, de.id, oc.id, data);
-                                                            trafficLight = getTrafficLight(bVal, budgetValue, de.id, dh.dimensionId);
-                                                        }
-                                                        tableRow.styles[dh.dimensionId + '.' + dh.periodId] = trafficLight;
                                                         tableRow.values[dh.dimensionId + '.' + dh.periodId] = bVal;
+                                                    }
+                                                    else {
+                                                        var dhId = dataParams.plannedDimension.id + '.' + dataParams.releaseDimension.id;
+                                                        if ( dh.dimensionId ===  dhId ) {
+                                                            var rh = angular.copy(dh);
+                                                            rh.dimensionId = dataParams.releaseDimension.id;
+                                                            var ph = angular.copy(dh);
+                                                            ph.dimensionId = dataParams.plannedDimension.id;
+                                                            var rv = filterBudgetData(rh, de.id, oc.id, data);
+                                                            var pv = filterBudgetData(ph, de.id, oc.id, data);
+
+                                                            var trafficLight = getTrafficLight(rv, pv, de.id, dh.dimensionId);
+                                                            tableRow.styles[dh.dimensionId + '.' + dh.periodId] = trafficLight;
+
+                                                            if (!pov[deg.id + '-' + 'A-' + dh.periodId]) {
+                                                                pov[deg.id + '-' + 'A-' + dh.periodId] = 0;
+                                                            }
+
+                                                            if (!pov[deg.id + '-' + 'M-' + dh.periodId]) {
+                                                                pov[deg.id + '-' + 'M-' + dh.periodId] = 0;
+                                                            }
+
+                                                            if (!pov[deg.id + '-' + 'N-' + dh.periodId]) {
+                                                                pov[deg.id + '-' + 'N-' + dh.periodId] = 0;
+                                                            }
+
+                                                            if (!pov[deg.id + '-' + 'X-' + dh.periodId]) {
+                                                                pov[deg.id + '-' + 'X-' + dh.periodId] = 0;
+                                                            }
+
+                                                            if (!rv || !pv) {
+                                                                pov[deg.id + '-' + 'X-' + dh.periodId] += 1;
+                                                            } else {
+                                                                var t = CommonUtils.getPercent(rv, pv, true, true);
+                                                                t = Number(t);
+                                                                if (t >= 100) {
+                                                                    pov[deg.id + '-' + 'A-' + dh.periodId] += 1;
+                                                                } else if (t >= 75 && t <= 99) {
+                                                                    pov[deg.id + '-' + 'M-' + dh.periodId] += 1;
+                                                                } else {
+                                                                    pov[deg.id + '-' + 'N-' + dh.periodId] += 1;
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 } else {
                                                     if (dh.dimensionId === dataParams.targetDimension.id)
@@ -1794,7 +1834,6 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
         })
 
         .service('DataValueService', function ($http, CommonUtils) {
-
             return {
                 getDataValueSet: function (params) {
                     var promise = $http.get('../api/dataValueSets.json?' + params).then(function (response) {
@@ -1852,9 +1891,18 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     var analyticsUrl = '';
                     if (clusterGroups && clusterGroups.length > 0 && clusterPeriods.length > 0) {
                         analyticsUrl += '&filter=ou:' + params.selectedOrgUnit.id + '&displayProperty=NAME&includeMetadataDetails=true';
-                        analyticsUrl += '&dimension=co&dimension=' + params.bta.category + ':' + $.map(params.baseLineTargetActualDimensions, function (dm) {
-                            return dm;
-                        }).join(';');
+
+                        if ( params.displayActionBudgetData ){
+                            analyticsUrl += '&dimension=co&dimension=' + params.bsr.category + ':' + $.map(params.budgetSpentReleaseDimensions, function (dm) {
+                                return dm;
+                            }).join(';');
+                        }
+                        else{
+                            analyticsUrl += '&dimension=co&dimension=' + params.bta.category + ':' + $.map(params.baseLineTargetActualDimensions, function (dm) {
+                                return dm;
+                            }).join(';');
+                        }
+
                         analyticsUrl += '&dimension=pe:' + $.map(clusterPeriods, function (pe) {
                             return pe.id;
                         }).join(';');
@@ -1879,21 +1927,21 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                         angular.forEach(clusterGroups, function (deg) {
                             des.push('DE_GROUP-' + deg.id);
                         });
-                        analyticsUrl += '&dimension=dx:' + des.join(';');
+                        //analyticsUrl += '&dimension=dx:' + des.join(';');
 
                         var def = $q.defer();
 
                         var res = {hasClusterData: false};
                         var clusterData = {};
                         FinancialDataService.getLocalData('data/cost.json').then(function (cost) {
-                            Analytics.getData(analyticsUrl).then(function (data) {
-                                if (data && data.data && data.metaData) {
-                                    res.clusterMetaData = data.metaData;
+                            Analytics.getDataInBatch(analyticsUrl, des).then(function ( response ) {
+                                if (response && response.data && response.metaData) {
+                                    res.clusterMetaData = response.metaData;
                                     res.hasClusterData = true;
 
                                     var dataParams = {
-                                        data: data.data,
-                                        metaData: data.metaData,
+                                        data: response.data,
+                                        metaData: response.metaData,
                                         reportPeriods: angular.copy(clusterPeriods),
                                         bta: params.bta,
                                         actualDimension: params.actualDimension,
@@ -1910,12 +1958,26 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                         legendSetsById: params.legendSetsById,
                                         defaultLegendSet: params.defaultLegendSet,
                                         performanceOverviewHeaders: clusterPerformanceOverviewHeaders,
-                                        displayActionBudgetData: false
+                                        displayActionBudgetData: params.displayActionBudgetData,
+                                        bsr: params.bsr,
+                                        plannedDimension: params.plannedDimension,
+                                        approvedDimension: params.approvedDimension,
+                                        spentDimension: params.spentDimension,
+                                        releaseDimension: params.releaseDimension
                                     };
 
                                     var processedData = Analytics.processData(dataParams);
                                     var clusterColumnId = params.actualDimension.id + '.' + params.selectedFiscalYear.id;
+                                    if ( params.displayActionBudgetData ){
+                                        clusterColumnId = params.plannedDimension.id + '.' + params.releaseDimension.id + '.' + params.selectedFiscalYear.id;
+                                    }
+
                                     angular.forEach(params.selectedCluster.options, function (op) {
+                                        if ( params.indicatorGroupType === 'output' ){
+                                            op.code = 'OP' + op.code;
+                                        }else if ( params.indicatorGroupType === 'output4action'){
+                                            op.code = 'AC' + op.code;
+                                        }
                                         var clusterProgramData = $filter('startsWith')(processedData.tableRows, {dataElementCode: op.code});
                                         if (!clusterData[op.code]) {
                                             clusterData[op.code] = {size: clusterProgramData.length, A: {value: 0}, M: {value: 0}, N: {value: 0}, X: {value: 0}};
@@ -1923,18 +1985,20 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
                                         angular.forEach(clusterProgramData, function (cpd) {
                                             var st = cpd.styles[clusterColumnId];
-                                            if (st.printStyle === 'green-background') {
-                                                clusterData[op.code].A.value += 1;
-                                                clusterData[op.code].A.pcnt = CommonUtils.getPercent(clusterData[op.code].A.value, clusterData[op.code].size, false, true);
-                                            } else if (st.printStyle === 'yellow-background') {
-                                                clusterData[op.code].M.value += 1;
-                                                clusterData[op.code].M.pcnt = CommonUtils.getPercent(clusterData[op.code].M.value, clusterData[op.code].size, false, true);
-                                            } else if (st.printStyle === 'red-background') {
-                                                clusterData[op.code].N.value += 1;
-                                                clusterData[op.code].N.pcnt = CommonUtils.getPercent(clusterData[op.code].N.value, clusterData[op.code].size, false, true);
-                                            } else {
-                                                clusterData[op.code].X.value += 1;
-                                                clusterData[op.code].X.pcnt = CommonUtils.getPercent(clusterData[op.code].X.value, clusterData[op.code].size, false, true);
+                                            if ( st && st.printStyle ){
+                                                if (st.printStyle === 'green-background') {
+                                                    clusterData[op.code].A.value += 1;
+                                                    clusterData[op.code].A.pcnt = CommonUtils.getPercent(clusterData[op.code].A.value, clusterData[op.code].size, false, true);
+                                                } else if (st.printStyle === 'yellow-background') {
+                                                    clusterData[op.code].M.value += 1;
+                                                    clusterData[op.code].M.pcnt = CommonUtils.getPercent(clusterData[op.code].M.value, clusterData[op.code].size, false, true);
+                                                } else if (st.printStyle === 'red-background') {
+                                                    clusterData[op.code].N.value += 1;
+                                                    clusterData[op.code].N.pcnt = CommonUtils.getPercent(clusterData[op.code].N.value, clusterData[op.code].size, false, true);
+                                                } else {
+                                                    clusterData[op.code].X.value += 1;
+                                                    clusterData[op.code].X.pcnt = CommonUtils.getPercent(clusterData[op.code].X.value, clusterData[op.code].size, false, true);
+                                                }
                                             }
                                         });
                                     });

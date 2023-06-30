@@ -411,8 +411,7 @@ ndpFramework.controller('OutcomeController',
             selectedDataElementGroup: $scope.model.selectedKra,
             dataElementsById: $scope.model.dataElementsById,
             legendSetsById: $scope.model.legendSetsById,
-            defaultLegendSet: $scope.model.defaultLegendSet,
-            performanceOverviewHeaders: $scope.model.clusterPerformanceOverviewHeaders            
+            defaultLegendSet: $scope.model.defaultLegendSet
         };
 
         $scope.model.clusterReportReady = false;

@@ -18,6 +18,7 @@ ndpFramework.controller('ActionOutputController',
         ResulstChainService,
         CommonUtils,
         DataValueService,
+        ClusterDataService,
         Analytics) {
 
     $scope.model = {
@@ -51,7 +52,8 @@ ndpFramework.controller('ActionOutputController',
 
     $scope.model.horizontalMenus = [
         {id: 'financialPerformance', title: 'financial_performance', order: 1, view: 'components/action/financial-performance.html', class: 'main-horizontal-menu'},
-        {id: 'clusterPerformance', title: 'cluster_performance', order: 2, view: 'components/action/cluster-performance.html', class: 'main-horizontal-menu'},
+        //{id: 'clusterPerformance', title: 'cluster_performance', order: 2, view: 'components/action/cluster-performance.html', class: 'main-horizontal-menu'},
+        {id: 'clusterPerformance', title: 'cluster_performance', order: 2, view: 'views/cluster/cluster-performance.html', class: 'main-horizontal-menu'},
         {id: 'completeness', title: 'completeness', order: 3, view: 'components/action/completeness.html', class: 'main-horizontal-menu'}
     ];
 
@@ -137,6 +139,10 @@ ndpFramework.controller('ActionOutputController',
         }
     });
 
+    $scope.$watch('model.selectedCluster', function(){
+        $scope.resetDataView();
+    });
+
     $scope.getBasePeriod = function(){
         $scope.model.basePeriod = null;
         var location = -1;
@@ -161,12 +167,12 @@ ndpFramework.controller('ActionOutputController',
 
         MetaDataFactory.getAll('legendSets').then(function(legendSets){
 
-            angular.forEach(legendSets, function(legendSet){
+            /*angular.forEach(legendSets, function(legendSet){
                 if ( legendSet.isTrafficLight ){
                     $scope.model.defaultLegendSet = legendSet;
                 }
                 $scope.model.legendSetsById[legendSet.id] = legendSet;
-            });
+            });*/
 
             MetaDataFactory.getAll('optionSets').then(function(optionSets){
 
@@ -196,79 +202,83 @@ ndpFramework.controller('ActionOutputController',
                     $scope.model.piapObjectives = $scope.model.resultsFrameworkChain.objectives;
                     $scope.model.interventions = $scope.model.resultsFrameworkChain.interventions;
 
-                    OptionComboService.getBtaDimensions().then(function( btaResponse ){
-                        
-                        if( !btaResponse || !btaResponse.bta || !btaResponse.baseline || !btaResponse.actual || !btaResponse.target ){
-                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
-                            return;
-                        }
+                    MetaDataFactory.getAll('optionGroupSets').then(function(optionGroupSets){
 
-                        $scope.model.bta = btaResponse.bta;
-                        $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
-                        $scope.model.actualDimension = btaResponse.actual;
-                        $scope.model.targetDimension = btaResponse.target;
-                        $scope.model.baselineDimension = btaResponse.baseline;
+                        $scope.model.optionGroupSets = optionGroupSets;
 
-                        OptionComboService.getBsrDimensions().then(function( bsrResponse ){
+                        OptionComboService.getBtaDimensions().then(function( btaResponse ){
 
-                            if( !bsrResponse || !bsrResponse.bsr || !bsrResponse.planned || !bsrResponse.approved || !bsrResponse.spent || !bsrResponse.release ){
-                                NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bsr_dimensions"));
+                            if( !btaResponse || !btaResponse.bta || !btaResponse.baseline || !btaResponse.actual || !btaResponse.target ){
+                                NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bta_dimensions"));
                                 return;
                             }
 
-                            $scope.model.bsr = bsrResponse.bsr;
-                            $scope.model.budgetSpentReleaseDimensions = $.map($scope.model.bsr.options, function(d){return d.id;});
-                            $scope.model.plannedDimension = bsrResponse.planned;
-                            $scope.model.approvedDimension = bsrResponse.approved;
-                            $scope.model.spentDimension = bsrResponse.spent;
-                            $scope.model.releaseDimension = bsrResponse.release;
+                            $scope.model.bta = btaResponse.bta;
+                            $scope.model.baseLineTargetActualDimensions = $.map($scope.model.bta.options, function(d){return d.id;});
+                            $scope.model.actualDimension = btaResponse.actual;
+                            $scope.model.targetDimension = btaResponse.target;
+                            $scope.model.baselineDimension = btaResponse.baseline;
 
-                            MetaDataFactory.getAll('dataElements').then(function(dataElements){
+                            OptionComboService.getBsrDimensions().then(function( bsrResponse ){
 
-                                $scope.model.dataElementsById = dataElements.reduce( function(map, obj){
-                                    map[obj.id] = obj;
-                                    return map;
-                                }, {});
+                                if( !bsrResponse || !bsrResponse.bsr || !bsrResponse.planned || !bsrResponse.approved || !bsrResponse.spent || !bsrResponse.release ){
+                                    NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("invalid_bsr_dimensions"));
+                                    return;
+                                }
 
-                                MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
+                                $scope.model.bsr = bsrResponse.bsr;
+                                $scope.model.budgetSpentReleaseDimensions = $.map($scope.model.bsr.options, function(d){return d.id;});
+                                $scope.model.plannedDimension = bsrResponse.planned;
+                                $scope.model.approvedDimension = bsrResponse.approved;
+                                $scope.model.spentDimension = bsrResponse.spent;
+                                $scope.model.releaseDimension = bsrResponse.release;
 
-                                    $scope.model.dataElementGroups = dataElementGroups;
+                                MetaDataFactory.getAll('dataElements').then(function(dataElements){
 
-                                    MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-intervention4action').then(function(dataElementGroupSets){
-                                        $scope.model.dataElementGroupSets = dataElementGroupSets;
+                                    $scope.model.dataElementsById = dataElements.reduce( function(map, obj){
+                                        map[obj.id] = obj;
+                                        return map;
+                                    }, {});
 
-                                        var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
-                                        periods = periods.reverse();
-                                        $scope.model.allPeriods = angular.copy( periods );
-                                        $scope.model.periods = periods;
+                                    MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
 
-                                        var selectedPeriodNames = ['2020/21'];
-                                        var today = DateUtils.getToday();
-                                        $scope.model.selectedFiscalYear = '';
-                                        angular.forEach($scope.model.periods, function(pe){
-                                            if ( pe.startDate <= today && pe.endDate <= today ){
-                                                $scope.model.selectedFiscalYear = pe;
+                                        $scope.model.dataElementGroups = dataElementGroups;
+
+                                        MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-intervention4action').then(function(dataElementGroupSets){
+                                            $scope.model.dataElementGroupSets = dataElementGroupSets;
+
+                                            var periods = PeriodService.getPeriods($scope.model.selectedPeriodType, $scope.model.periodOffset, $scope.model.openFuturePeriods);
+                                            periods = periods.reverse();
+                                            $scope.model.allPeriods = angular.copy( periods );
+                                            $scope.model.periods = periods;
+
+                                            var selectedPeriodNames = ['2020/21'];
+                                            var today = DateUtils.getToday();
+                                            $scope.model.selectedFiscalYear = '';
+                                            angular.forEach($scope.model.periods, function(pe){
+                                                if ( pe.startDate <= today && pe.endDate <= today ){
+                                                    $scope.model.selectedFiscalYear = pe;
+                                                }
+                                            });
+
+                                            if ( $scope.model.selectedFiscalYear ){
+                                                selectedPeriodNames = [$scope.model.selectedFiscalYear.displayName];
                                             }
+
+                                            angular.forEach($scope.model.periods, function(pe){
+                                                if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
+                                                   $scope.model.selectedPeriods.push(pe);
+                                                }
+                                            });
+
+                                            $scope.model.performanceOverviewLegends = CommonUtils.getPerformanceOverviewHeaders();
+                                            $scope.model.metaDataCached = true;
+                                            $scope.populateMenu();
                                         });
-
-                                        if ( $scope.model.selectedFiscalYear ){
-                                            selectedPeriodNames = [$scope.model.selectedFiscalYear.displayName];
-                                        }
-
-                                        angular.forEach($scope.model.periods, function(pe){
-                                            if(selectedPeriodNames.indexOf(pe.displayName) > -1 ){
-                                               $scope.model.selectedPeriods.push(pe);
-                                            }
-                                        });
-
-                                        $scope.model.metaDataCached = true;
-                                        $scope.populateMenu();
                                     });
                                 });
                             });
-
                         });
-                    
                     });
                 });
             });
@@ -283,6 +293,14 @@ ndpFramework.controller('ActionOutputController',
 
         if( $scope.model.selectedMenu && $scope.model.selectedMenu.ndp && $scope.model.selectedMenu.code ){
             $scope.model.dataElementGroupSets = $filter('filter')($scope.model.dataElementGroupSets, {ndp: $scope.model.selectedMenu.ndp}, true);
+        }
+
+        var sectorsOpgs = $filter('getFirst')($scope.model.optionGroupSets, {code: $scope.model.selectedMenu.ndp + '_CLUSTER'});
+
+        $scope.model.clusters = sectorsOpgs && sectorsOpgs.optionGroups ? sectorsOpgs.optionGroups : [];
+        if( !$scope.model.clusters || !$scope.model.clusters.length || !$scope.model.clusters.length === 0 ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster_configuration"));
+            return;
         }
     };
 
@@ -422,11 +440,131 @@ ndpFramework.controller('ActionOutputController',
                     $scope.model.numerator = processedData.completenessNum;
                     $scope.model.denominator = processedData.completenessDen;
                     $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
-                    $scope.model.tableRows = processedData.tableRows;
+                    $scope.model.tableRows = [];
                     $scope.model.povTableRows = processedData.povTableRows;
+
+                    angular.forEach(processedData.tableRows, function(row){
+                        angular.forEach($scope.model.dataHeaders, function(dh){
+                            if ( !dh.isRowData ){
+                                if( !row.values || !dh || !dh.denDimensionId || !dh.periodId ){
+                                    return;
+                                }
+                                var num = row.values[dh.numDimensionId + '.' + dh.periodId];
+                                var den = row.values[dh.denDimensionId + '.' + dh.periodId];
+                                var percent = CommonUtils.getPercent(num, den, true, true);
+                                row.values[dh.dimensionId + '.' + dh.periodId] = percent;
+                                row.styles[dh.dimensionId + '.' + dh.periodId] = CommonUtils.getTrafficColorForValue( percent );
+                            }
+                        });
+                        $scope.model.tableRows.push( row );
+                    });
                 }
             });
         }
+    };
+
+    $scope.getClusterData = function(){
+
+        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
+            return;
+        }
+
+        if( !$scope.model.selectedCluster || !$scope.model.selectedCluster.options || !$scope.model.selectedCluster.options.length ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster"));
+            return;
+        }
+
+        if( !$scope.model.selectedFiscalYear ){
+            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_fiscal_year"));
+            return;
+        }
+
+        $scope.model.clusterReportReady = false;
+        $scope.model.clusterReportStarted = true;
+        $scope.model.reportReady = false;
+        $scope.model.reportStarted = true;
+
+        dhis2.ndp.downloadGroupSets( 'sub-intervention4action' ).then(function(){
+
+            MetaDataFactory.getAll('dataElements').then(function(dataElements){
+
+                $scope.model.dataElementsById = dataElements.reduce( function(map, obj){
+                    map[obj.id] = obj;
+                    return map;
+                }, {});
+
+                MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
+
+                    $scope.model.allDataElementGroups = dataElementGroups;
+                    $scope.model.dataElementGroups = dataElementGroups;
+
+                    MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-intervention4action').then(function(dataElementGroupSets){
+                        $scope.model.dataElementGroupSets = dataElementGroupSets;
+
+                        $scope.model.metaDataCached = true;
+
+                        if( $scope.model.selectedMenu && $scope.model.selectedMenu.ndp && $scope.model.selectedMenu.code ){
+                            $scope.model.dataElementGroupSets = $filter('filter')($scope.model.dataElementGroupSets, {ndp: $scope.model.selectedMenu.ndp}, true);
+                        }
+
+                        $scope.model.selectedDataElementGroupSets = angular.copy($scope.model.dataElementGroupSets);
+                        $scope.getOutputs();
+
+                        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
+                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
+                            return;
+                        }
+
+                        if( !$scope.model.selectedCluster || !$scope.model.selectedCluster.options || !$scope.model.selectedCluster.options.length ){
+                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster"));
+                            return;
+                        }
+
+                        if( !$scope.model.selectedFiscalYear ){
+                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_fiscal_year"));
+                            return;
+                        }
+
+                        var params = {
+                            indicatorGroupType: 'output4action',
+                            selectedOrgUnit: $scope.selectedOrgUnit,
+                            selectedCluster: $scope.model.selectedCluster,
+                            selectedFiscalYear: $scope.model.selectedFiscalYear,
+                            allDataElementGroups: $scope.model.allDataElementGroups,
+                            dataElementGroupSets: $scope.model.dataElementGroupSets,
+                            bta: $scope.model.bta,
+                            baseLineTargetActualDimensions: $scope.model.baseLineTargetActualDimensions,
+                            actualDimension: $scope.model.actualDimension,
+                            targetDimension: $scope.model.targetDimension,
+                            baselineDimension: $scope.model.baselineDimension,
+                            selectedDataElementGroupSets: $scope.model.clusterDataElementGroupSets,
+                            selectedDataElementGroup: $scope.model.selectedKra,
+                            dataElementsById: $scope.model.dataElementsById,
+                            legendSetsById: $scope.model.legendSetsById,
+                            defaultLegendSet: $scope.model.defaultLegendSet,
+                            bsr: $scope.model.bsr,
+                            budgetSpentReleaseDimensions: $scope.model.budgetSpentReleaseDimensions,
+                            plannedDimension: $scope.model.plannedDimension,
+                            approvedDimension: $scope.model.approvedDimension,
+                            spentDimension: $scope.model.spentDimension,
+                            releaseDimension: $scope.model.releaseDimension,
+                            displayActionBudgetData: true
+                        };
+
+                        ClusterDataService.getData( params ).then(function(result){
+                            $scope.model.clusterReportReady = true;
+                            $scope.model.clusterReportStarted = false;
+                            $scope.model.reportReady = true;
+                            $scope.model.reportStarted = false;
+                            $scope.model.clusterData = result.clusterData;
+                            $scope.model.hasClusterData = result.hasClusterData;
+                            $scope.model.clusterPerformanceOverviewHeaders = result.clusterPerformanceOverviewHeaders;
+                        });
+                    });
+                });
+            });
+        });
     };
 
     $scope.showOrgUnitTree = function(){
@@ -542,17 +680,7 @@ ndpFramework.controller('ActionOutputController',
     };
 
     $scope.getCoverage = function(numerator, denominator){
-        return CommonUtils.getPercent(numerator, denominator, true, true);
-    };
-    
-    $scope.getBudgetPercentage = function( value, dimension){
-        if( !value || !dimension || !dimension.denDimensionId || !dimension.periodId ){
-            return;
-        }
-        
-        var num = value[dimension.numDimensionId + '.' + dimension.periodId];
-        var den = value[dimension.denDimensionId + '.' + dimension.periodId];        
-        return CommonUtils.getPercent(num, den, true, true);
+        return CommonUtils.getPercent(numerator, denominator, false, true);
     };
 
 });
