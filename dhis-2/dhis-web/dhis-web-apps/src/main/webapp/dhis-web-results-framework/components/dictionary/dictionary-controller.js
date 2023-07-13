@@ -8,9 +8,11 @@ ndpFramework.controller('DictionaryController',
                 $modal,
                 $filter,
                 $translate,
+                Paginator,
                 NotificationService,
                 SessionStorageService,
-                MetaDataFactory) {
+                MetaDataFactory,
+                DictionaryService) {
 
     $scope.model = {
         indicatorsFetched: false,
@@ -49,6 +51,9 @@ ndpFramework.controller('DictionaryController',
             invalid: ['isProgrammeDocument', 'isDocumentFolder']
         }
     };
+
+    //Paging
+    $scope.pager = {pageSize: 50, page: 1, toolBarDisplay: 5};
 
     $scope.model.horizontalMenus = [
         {id: 'default', title: 'ndp_indicator', order: 1, view: 'components/dictionary/default.html', active: true, class: 'main-horizontal-menu'},
@@ -152,8 +157,147 @@ ndpFramework.controller('DictionaryController',
         }
         $scope.getClassificationGroups();
     });
+    
+    $scope.fetchIndicators = function(){
+        $scope.model.dataElements = [];
+        DictionaryService.getDataElements( $scope.pager ).then(function( response ){
+            if ( response && response.dataElements ){
+                var dataElements = response.dataElements;                
+                angular.forEach(dataElements, function(de){
+                    var cc = $scope.model.categoryCombosById[de.categoryCombo.id];
+                    de.disaggregation = !cc || cc.isDefault ? '-' : cc.displayName;
+                    var vote = [];
+                    var periodType = [];
 
-    dhis2.ndp.downloadAllMetaData().then(function(){
+                    for(var i=0; i<de.dataSetElements.length; i++){
+                        var ds = de.dataSetElements[i].dataSet;
+                        var pt = ds.periodType  === 'FinancialJuly' ? 'Fiscal year' : ds.periodType;
+                        if( periodType.indexOf(pt) === -1){
+                            periodType.push(pt);
+                        }
+                        if( ds.organisationUnits ){
+                            var votes = ds.organisationUnits.map(function(ou){return ou.code;});
+                            angular.forEach(votes, function(v){
+                                if(vote.indexOf(v) === -1){
+                                    vote.push(v);
+                                }
+                            });
+                        }                        
+                    }
+
+                    if( vote && vote.length > 0 ){
+                        vote = vote.sort();
+                        if ( vote.length > 10 ){
+                            de.orgUnit = vote.slice(0,5);
+                            de.orgUnit.push('...');
+                            de.orgUnit = de.orgUnit.join(', ');
+                        }
+                        de.vote = vote.join(', ');
+                    }
+
+                    if( periodType && periodType.length > 0 ){
+                        periodType = periodType.sort();
+                        de.periodType = periodType.join(', ');
+                    }
+
+                    de = $scope.getAttributeCompleteness( de );
+                    $scope.model.dataElementsById[de.id] = de;
+                    $scope.model.dataElements.push( de );
+                });
+
+                $scope.model.indicatorsFetched = true;
+            }
+            if ( response.pager ){
+                response.pager.pageSize = response.pager.pageSize ? response.pager.pageSize : $scope.pager.pageSize;
+                $scope.pager = response.pager;
+                $scope.pager.toolBarDisplay = 5;
+
+                Paginator.setPage($scope.pager.page);
+                Paginator.setPageCount($scope.pager.pageCount);
+                Paginator.setPageSize($scope.pager.pageSize);
+                Paginator.setItemCount($scope.pager.total);
+            }
+            $scope.model.indicatorsFetched = true;
+        });
+    };
+
+    dhis2.ndp.downloadMetaData().then(function(){
+        SessionStorageService.set('METADATA_CACHED', true);
+        $scope.model.dictionaryHeaders = [
+            {id: 'displayName', name: 'name', colSize: "col-sm-1", show: true, fetch: false},
+            {id: 'code', name: 'code', colSize: "col-sm-1", show: true, fetch: false},
+            {id: 'aggregationType', name: 'aggregationType', colSize: "col-sm-1", show: true, fetch: false},
+            {id: 'disaggregation', name: 'disaggregation', colSize: "col-sm-1", show: true, fetch: false},
+            {id: 'valueType', name: 'valueType', colSize: "col-sm-1", show: true, fetch: false},
+            {id: 'periodType', name: 'frequency', colSize: "col-sm-1", show: true, fetch: false},
+            {id: 'vote', name: 'vote', colSize: 'col-sm-1', show: true, fetch: false}
+        ];
+        
+        MetaDataFactory.getAll('attributes').then(function(attributes){
+
+            $scope.model.attributes = attributes;
+
+            MetaDataFactory.getAll('categoryCombos').then(function(categoryCombos){
+                angular.forEach(categoryCombos, function(cc){
+                    $scope.model.categoryCombosById[cc.id] = cc;
+                });
+
+                MetaDataFactory.getAll('optionSets').then(function(optionSets){
+                    $scope.model.optionSets = optionSets;
+                    angular.forEach(optionSets, function(optionSet){
+                        $scope.model.optionSetsById[optionSet.id] = optionSet;
+                    });
+
+                    $scope.model.ndp = $filter('getFirst')($scope.model.optionSets, {code: 'ndp'});
+
+                    if( !$scope.model.ndp || !$scope.model.ndp.code ){
+                        NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_ndp_configuration"));
+                        return;
+                    }
+
+                    $scope.model.ndpProgram = $filter('filter')(optionSets, {code: 'ndpIIIProgram'})[0];
+                    
+                    $scope.sortHeader = {id: 'displayName', name: 'name', colSize: "col-sm-1", show: true, fetch: false};
+                    $scope.model.dictionaryHeaders = [
+                        {id: 'displayName', name: 'name', colSize: "col-sm-1", show: true, fetch: false},
+                        {id: 'code', name: 'code', colSize: "col-sm-1", show: true, fetch: false},
+                        {id: 'aggregationType', name: 'aggregationType', colSize: "col-sm-1", show: true, fetch: false},
+                        {id: 'disaggregation', name: 'disaggregation', colSize: "col-sm-1", show: true, fetch: false},
+                        {id: 'valueType', name: 'valueType', colSize: "col-sm-1", show: true, fetch: false},
+                        {id: 'periodType', name: 'frequency', colSize: "col-sm-1", show: true, fetch: false},
+                        {id: 'vote', name: 'vote', colSize: 'col-sm-1', show: true, fetch: false}
+                    ];
+
+                    angular.forEach($scope.model.attributes, function(att){
+                        if(att['dataElementAttribute'] && $scope.model.completeness.invalid.indexOf(att.code) === -1 ){
+                            var header = {id: att.code, name: att.name, show: false, fetch: true, colSize: "col-sm-1"};
+                            $scope.model.dictionaryHeaders.push(header);
+                        }
+                    });
+                });
+            });
+        });
+        $scope.fetchIndicators();
+    });
+
+    $scope.jumpToPage = function(){
+        if($scope.pager && $scope.pager.page && $scope.pager.pageCount && $scope.pager.page > $scope.pager.pageCount){
+            $scope.pager.page = $scope.pager.pageCount;
+        }
+        $scope.fetchIndicators();
+    };
+
+    $scope.resetPageSize = function(){
+        $scope.pager.page = 1;
+        $scope.fetchIndicators();
+    };
+
+    $scope.getPage = function(page){
+        $scope.pager.page = page;
+        $scope.fetchIndicators();
+    };
+    
+    /*dhis2.ndp.downloadAllMetaData().then(function(){
 
         SessionStorageService.set('ALL_METADATA_CACHED', true);
 
@@ -270,7 +414,7 @@ ndpFramework.controller('DictionaryController',
                 });
             });
         });
-    });
+    });*/
 
     $scope.getAttributeCompleteness = function( item ){
         var size = 0;

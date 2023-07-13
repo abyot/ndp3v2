@@ -74,6 +74,11 @@
             </tbody>
         </table>
     </div>
+    <div class="row hideInPrint">
+        <div class="col-sm-12 small-vertical-spacing">
+            <serverside-paginator></serverside-paginator>
+        </div>        
+    </div>
     <div class="vertical-spacing" ng-if="model.dataElements.length === 0">
         <div class="alert alert-warning">
             {{'no_indicators_defined'| translate}}
