@@ -1,0 +1,151 @@
+[
+    {
+        "id": "NDP",
+        "domain": "NDP",
+        "displayName": "ndp_results",
+        "order": 1,
+        "hasChildren": true,
+        "show": true,
+        "color": "ndp_menu",
+        "children": [
+            {
+                "id": "OBJ",
+                "domain": "NOUT",
+                "code": "resultsFrameworkObjective",
+                "order": 1,
+                "displayName": "objective_outcomes",
+                "children": [],
+                "view": "components/objective/objective-status.html",
+                "color": "ndp-menu"
+            },
+            {
+                "id": "SUB-OUTCOME",
+                "domain": "SUB-OUTCOME",
+                "code": "sub-programme",
+                "order": 2,
+                "displayName": "intermediate_outcomes",
+                "children": [],
+                "view": "components/intermediate-outcome/intermdiate-outcome-status.html",
+                "color": "ndp-menu"
+            },
+            {
+                "id": "SUB-OUTPUT",
+                "domain": "OUTPUT",
+                "code": "sub-intervention",
+                "order": 3,
+                "displayName": "output_level",
+                "show": true,
+                "view": "components/output/output-status.html",
+                "children": [],
+                "color": "ndp-menu"
+            },
+            {
+                "id": "ACT",
+                "domain": "ACT",
+                "code": "sub-intervention4action",
+                "order": 4,
+                "displayName": "action_level",
+                "show": true,
+                "view": "components/action/action-output-status.html",
+                "children": [],
+                "color": "ndp-menu"
+            }
+        ]
+    },
+    {
+        "id": "SPACE",
+        "displayName": "space",
+        "order": 2,
+        "children": []
+    },
+    {
+        "id": "TR",
+        "order": 3,
+        "displayName": "tracking",
+        "show": true,
+        "domain": "TR",
+        "hasChildren": true,
+        "children": [
+            {
+                "id": "PRJP",
+                "domain": "PRJP",
+                "code": "project",
+                "displayName": "project_performance",
+                "order": 1,
+                "children": [],
+                "view": "components/project/performance.html"
+            },
+            {
+                "id": "POAC",
+                "domain": "POAC",
+                "code": "policy",
+                "displayName": "policy_action",
+                "order": 2,
+                "children": [],
+                "view": "components/policy/performance.html"
+            }
+        ]
+    },
+    {
+        "id": "SPACE",
+        "displayName": "space",
+        "order": 4,
+        "children": []
+    },
+    {
+        "id": "DG",
+        "domain": "DG",
+        "code": "dataGovernance",
+        "displayName": "data_governance",
+        "order": 5,
+        "show": true,
+        "color": "dg-menu",
+        "children": [
+            {
+                "id": "DG-DICT",
+                "domain": "DICT",
+                "code": "DICT",
+                "order": 1,
+                "displayName": "indicator_dictionary",
+                "view": "components/dictionary/dictionary-status.html",
+                "color": "dg-menu"
+            },
+            {
+                "id": "DG-WFG",
+                "domain": "WFG",
+                "code": "WFG",
+                "order": 2,
+                "displayName": "workflow_guidelines",
+                "hasNoNDP": true,
+                "view": "views/workflow-guideline.html"
+            },
+            {
+                "id": "DG-FAQ",
+                "domain": "FAQ",
+                "code": "FAQ",
+                "order": 3,
+                "displayName": "faqs",
+                "view": "components/faq/faq.html",
+                "hasNoNDP": true,
+                "color": "dg-menu"
+            }
+        ]
+    },
+    {
+        "id": "SPACE",
+        "displayName": "space",
+        "order": 6,
+        "children": []
+    },
+    {
+        "id": "LIB",
+        "domain": "LIB",
+        "code": "LIB",
+        "displayName": "document_library",
+        "order": 7,
+        "children": [],
+        "view": "components/library/library-status.html",
+        "hasNoNDP": true,
+        "color": "lib-menu"
+    }
+]

@@ -18,7 +18,6 @@ ndpFramework.controller('OutputController',
         CommonUtils,
         DataValueService,
         Analytics,
-        ClusterDataService,
         DateUtils) {
 
     $scope.model = {
@@ -55,8 +54,7 @@ ndpFramework.controller('OutputController',
         {id: 'result', title: 'targets', order: 1, view: 'components/output/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/output/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/output/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'views/cluster/cluster-performance.html', class: 'main-horizontal-menu'},
-        {id: 'completeness', title: 'completeness', order: 5, view: 'components/output/completeness.html', class: 'main-horizontal-menu'}
+        {id: 'completeness', title: 'completeness', order: 4, view: 'components/output/completeness.html', class: 'main-horizontal-menu'}
     ];
 
     //Get orgunits for the logged in user
@@ -149,10 +147,6 @@ ndpFramework.controller('OutputController',
         $scope.model.selectedDataElementGroupSets = [];
     });
 
-    $scope.$watch('model.selectedCluster', function(){
-        $scope.resetDataView();
-    });
-    
     $scope.getBasePeriod = function(){
         $scope.model.basePeriod = null;
         var location = -1;
@@ -262,21 +256,11 @@ ndpFramework.controller('OutputController',
         if( $scope.model.selectedMenu && $scope.model.selectedMenu.ndp && $scope.model.selectedMenu.code ){
             $scope.model.dataElementGroupSets = $filter('filter')($scope.model.dataElementGroupSets, {ndp: $scope.model.selectedMenu.ndp}, true);
         }
-        
-        var sectorsOpgs = $filter('getFirst')($scope.model.optionGroupSets, {code: $scope.model.selectedMenu.ndp + '_CLUSTER'});
-            
-        $scope.model.clusters = sectorsOpgs && sectorsOpgs.optionGroups ? sectorsOpgs.optionGroups : [];
-        if( !$scope.model.clusters || !$scope.model.clusters.length || !$scope.model.clusters.length === 0 ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster_configuration"));
-            return;
-        }
     };
 
     $scope.resetDataView = function(){
         $scope.model.data = null;
-        $scope.model.clusterData = null;
         $scope.model.reportReady = false;
-        $scope.model.clusterReportReady = false;
         $scope.model.dataExists = false;
         $scope.model.dataHeaders = [];
     };
@@ -444,103 +428,6 @@ ndpFramework.controller('OutputController',
                                 }
                             });
                         }
-                    });
-                });
-            });
-        });
-    };
-
-    $scope.getClusterData = function(){
-        
-        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
-            return;
-        }
-
-        if( !$scope.model.selectedCluster || !$scope.model.selectedCluster.options || !$scope.model.selectedCluster.options.length ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster"));
-            return;
-        }
-
-        if( !$scope.model.selectedFiscalYear ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_fiscal_year"));
-            return;
-        }
-
-        $scope.model.clusterReportReady = false;
-        $scope.model.clusterReportStarted = true;
-        $scope.model.reportReady = false;
-        $scope.model.reportStarted = true;
-
-        dhis2.ndp.downloadGroupSets( 'sub-intervention' ).then(function(){
-
-            MetaDataFactory.getAll('dataElements').then(function(dataElements){
-
-                $scope.model.dataElementsById = dataElements.reduce( function(map, obj){
-                    map[obj.id] = obj;
-                    return map;
-                }, {});
-
-                MetaDataFactory.getDataElementGroups().then(function(dataElementGroups){
-
-                    $scope.model.allDataElementGroups = dataElementGroups;
-                    $scope.model.dataElementGroups = dataElementGroups;
-
-                    MetaDataFactory.getAllByProperty('dataElementGroupSets', 'indicatorGroupSetType', 'sub-intervention').then(function(dataElementGroupSets){
-                        $scope.model.dataElementGroupSets = dataElementGroupSets;
-
-                        $scope.model.metaDataCached = true;
-
-                        if( $scope.model.selectedMenu && $scope.model.selectedMenu.ndp && $scope.model.selectedMenu.code ){
-                            $scope.model.dataElementGroupSets = $filter('filter')($scope.model.dataElementGroupSets, {ndp: $scope.model.selectedMenu.ndp}, true);
-                        }
-
-                        $scope.model.selectedDataElementGroupSets = angular.copy($scope.model.dataElementGroupSets);
-                        $scope.getOutputs();
-
-                        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
-                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
-                            return;
-                        }
-
-                        if( !$scope.model.selectedCluster || !$scope.model.selectedCluster.options || !$scope.model.selectedCluster.options.length ){
-                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster"));
-                            return;
-                        }
-
-                        if( !$scope.model.selectedFiscalYear ){
-                            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_fiscal_year"));
-                            return;
-                        }
-
-                        var params = {
-                            indicatorGroupType: 'output',
-                            selectedOrgUnit: $scope.selectedOrgUnit,
-                            selectedCluster: $scope.model.selectedCluster,
-                            selectedFiscalYear: $scope.model.selectedFiscalYear,
-                            allDataElementGroups: $scope.model.allDataElementGroups,
-                            dataElementGroupSets: $scope.model.dataElementGroupSets,
-                            bta: $scope.model.bta,
-                            baseLineTargetActualDimensions: $scope.model.baseLineTargetActualDimensions,
-                            actualDimension: $scope.model.actualDimension,
-                            targetDimension: $scope.model.targetDimension,
-                            baselineDimension: $scope.model.baselineDimension,
-                            selectedDataElementGroupSets: $scope.model.clusterDataElementGroupSets,
-                            selectedDataElementGroup: $scope.model.selectedKra,
-                            dataElementsById: $scope.model.dataElementsById,
-                            legendSetsById: $scope.model.legendSetsById,
-                            defaultLegendSet: $scope.model.defaultLegendSet
-                        };
-
-                        ClusterDataService.getData( params ).then(function(result){
-                            $scope.model.clusterReportReady = true;
-                            $scope.model.clusterReportStarted = false;
-                            $scope.model.reportReady = true;
-                            $scope.model.reportStarted = false;
-                            $scope.model.clusterData = result.clusterData;
-                            $scope.model.hasClusterData = result.hasClusterData;
-                            $scope.model.clusterPerformanceOverviewHeaders = result.clusterPerformanceOverviewHeaders;
-                        });
                     });
                 });
             });

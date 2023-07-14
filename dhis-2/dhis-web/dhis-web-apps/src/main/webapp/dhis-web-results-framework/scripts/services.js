@@ -44,10 +44,8 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
     .service('NDPMenuService', function ($http, CommonUtils) {
         return {
-            getMenu: function () {
-                var menuFile = 'data/ndpMenu.json';
-                //var menuFile = 'data/ndpMenuSimplified.json';
-                var promise = $http.get(menuFile).then(function (response) {
+            getMenu: function ( path ) {
+                var promise = $http.get( path ).then(function (response) {
                     return response.data;
                 }, function (response) {
                     CommonUtils.errorNotifier(response);

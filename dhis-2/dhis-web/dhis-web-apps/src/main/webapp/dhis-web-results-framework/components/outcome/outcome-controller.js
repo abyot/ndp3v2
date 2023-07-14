@@ -18,7 +18,6 @@ ndpFramework.controller('OutcomeController',
         CommonUtils,
         DataValueService,
         FinancialDataService,
-        ClusterDataService,
         DateUtils) {
 
     $scope.model = {
@@ -47,16 +46,14 @@ ndpFramework.controller('OutcomeController',
         displayProjectOutputs: true,
         displayDepartmentOutPuts: true,
         explanations: [],
-        commentRow: {},
-        clusters: []
+        commentRow: {}
     };
 
     $scope.model.horizontalMenus = [
         {id: 'target', title: 'targets', order: 1, view: 'components/outcome/results.html', active: true, class: 'main-horizontal-menu'},
         {id: 'physicalPerformance', title: 'performance', order: 2, view: 'components/outcome/physical-performance.html', class: 'main-horizontal-menu'},
         {id: 'performanceOverview', title: 'performance_overview', order: 3, view: 'components/outcome/performance-overview.html', class: 'main-horizontal-menu'},
-        {id: 'clusterPerformance', title: 'cluster_performance', order: 4, view: 'views/cluster/cluster-performance.html', class: 'main-horizontal-menu'},
-        {id: 'completeness', title: 'completeness', order: 5, view: 'components/outcome/completeness.html', class: 'main-horizontal-menu'}
+        {id: 'completeness', title: 'completeness', order: 4, view: 'components/outcome/completeness.html', class: 'main-horizontal-menu'}
     ];
 
     //Get orgunits for the logged in user
@@ -98,10 +95,6 @@ ndpFramework.controller('OutcomeController',
                 $scope.getOutcomes();
             }
         }
-    });
-
-    $scope.$watch('model.selectedCluster', function(){
-        $scope.resetDataView();
     });
 
     $scope.getBasePeriod = function(){
@@ -228,22 +221,12 @@ ndpFramework.controller('OutcomeController',
             else{
                 $scope.model.ndpProgram = prs[0];
             }
-
-            var sectorsOpgs = $filter('getFirst')($scope.model.optionGroupSets, {code: $scope.model.selectedMenu.ndp + '_CLUSTER'});
-            
-            $scope.model.clusters = sectorsOpgs && sectorsOpgs.optionGroups ? sectorsOpgs.optionGroups : [];
-            if( !$scope.model.clusters || !$scope.model.clusters.length || !$scope.model.clusters.length === 0 ){
-                NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster_configuration"));
-                return;
-            }
         }
     };
 
     $scope.resetDataView = function(){
         $scope.model.data = null;
-        $scope.model.clusterData = null;
         $scope.model.reportReady = false;
-        $scope.model.clusterReportReady = false;
         $scope.model.dataExists = false;
         $scope.model.dataHeaders = [];
     };
@@ -376,53 +359,6 @@ ndpFramework.controller('OutcomeController',
                 });
             });
         }
-    };
-    
-    $scope.getClusterData = function(){
-        
-        if( !$scope.selectedOrgUnit || !$scope.selectedOrgUnit.id ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_vote"));
-            return;
-        }
-
-        if( !$scope.model.selectedCluster || !$scope.model.selectedCluster.options || !$scope.model.selectedCluster.options.length ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_cluster"));
-            return;
-        }
-
-        if( !$scope.model.selectedFiscalYear ){
-            NotificationService.showNotifcationDialog($translate.instant("error"), $translate.instant("missing_fiscal_year"));
-            return;
-        }
-
-        var params = {
-            indicatorGroupType: 'outcome',
-            selectedOrgUnit: $scope.selectedOrgUnit,
-            selectedCluster: $scope.model.selectedCluster,
-            selectedFiscalYear: $scope.model.selectedFiscalYear,            
-            allDataElementGroups: $scope.model.allDataElementGroups,
-            dataElementGroupSets: $scope.model.dataElementGroupSets,
-            bta: $scope.model.bta,
-            baseLineTargetActualDimensions: $scope.model.baseLineTargetActualDimensions,
-            actualDimension: $scope.model.actualDimension,
-            targetDimension: $scope.model.targetDimension,
-            baselineDimension: $scope.model.baselineDimension,
-            selectedDataElementGroupSets: $scope.model.clusterDataElementGroupSets,
-            selectedDataElementGroup: $scope.model.selectedKra,
-            dataElementsById: $scope.model.dataElementsById,
-            legendSetsById: $scope.model.legendSetsById,
-            defaultLegendSet: $scope.model.defaultLegendSet
-        };
-
-        $scope.model.clusterReportReady = false;
-        $scope.model.clusterReportStarted = true;
-        ClusterDataService.getData( params ).then(function(result){
-            $scope.model.clusterReportReady = true;
-            $scope.model.clusterReportStarted = false;
-            $scope.model.clusterData = result.clusterData;
-            $scope.model.hasClusterData = result.hasClusterData;
-            $scope.model.clusterPerformanceOverviewHeaders = result.clusterPerformanceOverviewHeaders;
-        });        
     };
     
     $scope.showOrgUnitTree = function(){
