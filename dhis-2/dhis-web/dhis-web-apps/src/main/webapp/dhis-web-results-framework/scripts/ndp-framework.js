@@ -339,7 +339,7 @@ function filterMissingDataElements( objs ){
 }
 
 function getDataElements( ids ){
-    return dhis2.metadata.getBatches( ids, dhis2.ndp.batchSize, 'dataElements', 'dataElements', dhis2.ndp.apiUrl + '/dataElements.json', 'paging=false&fields=id,code,displayName,shortName,description,formName,valueType,optionSetValue,optionSet[id],legendSets[id],attributeValues[value,attribute[id,name,valueType,code]],categoryCombo[id]', 'idb', dhis2.ndp.store);
+    return dhis2.metadata.getBatches( ids, dhis2.ndp.batchSize, 'dataElements', 'dataElements', dhis2.ndp.apiUrl + '/dataElements.json', 'paging=false&fields=id,code,displayName,aggregationType,shortName,description,formName,valueType,optionSetValue,optionSet[id],legendSets[id],attributeValues[value,attribute[id,name,valueType,code]],categoryCombo[id]', 'idb', dhis2.ndp.store);
 }
 
 function getMetaDataElementGroups(){

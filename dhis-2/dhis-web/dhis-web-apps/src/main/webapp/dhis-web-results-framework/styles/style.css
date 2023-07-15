@@ -728,3 +728,10 @@ ul.tree ul li:last-child:before {
     max-width: 50px;
     min-width: 50px;
 }
+
+div.paging a.active
+{
+    text-decoration: none;
+    color: #000;
+    cursor: default;
+}

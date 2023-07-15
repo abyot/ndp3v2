@@ -2016,7 +2016,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
     .service('DictionaryService', function($http, DHIS2URL, CommonUtils){
         return {
             getDataElements: function( pager ){
-                var url = DHIS2URL + '/dataElements.json?' + 'order=name:asc&fields=id,code,displayName,shortName,description,formName,valueType,optionSetValue,optionSet[id],legendSets[id],attributeValues[value,attribute[id,name,valueType,code]],categoryCombo[id],dataElementGroups[id,displayName,attributeValues[value,attribute[code]],groupSets[id,displayName,attributeValues[value,attribute[code]]]],dataSetElements[dataSet[id,name,periodType,organisationUnits[id,code,displayName]]]';
+                var url = DHIS2URL + '/dataElements.json?' + 'order=name:asc&fields=id,code,aggregationType,displayName,shortName,description,formName,valueType,optionSetValue,optionSet[id],legendSets[id],attributeValues[value,attribute[id,name,valueType,code]],categoryCombo[id,isDefault],dataElementGroups[id,displayName,attributeValues[value,attribute[code]],groupSets[id,displayName,attributeValues[value,attribute[code]]]],dataSetElements[dataSet[id,name,periodType,organisationUnits[id,code,displayName]]]';
                 if ( pager ){
                     var pgSize = pager.pageSize ? pager.pageSize : 50;
                     var pg = pager.page ? pager.page : 1;

@@ -2,29 +2,8 @@
     {{'indicator_list'| translate}}
 </h2>
 
-<div ng-if="model.indicatorsFetched">
-    <div class="row">
-        <div class="col-sm-12 small-vertical-spacing">
-            <ui-select ng-model="model.selectedNDP"
-                       theme="select2"
-                       style="width:100%;">
-                <ui-select-match allow-clear="true" class="form-control-ui-select" placeholder="{{model.ndp && model.ndp.options && model.ndp.options.length > 0 ? 'please_select_ndp' : 'empty'| translate}}">{{$select.selected.displayName|| $select.selected}}</ui-select-match>
-                <ui-select-choices repeat="option in model.ndp.options | filter: $select.search | limitTo:maxOptionSize | orderBy: ['displayName']">
-                    <span ng-bind-html="option.displayName | highlight: $select.search"></span>
-                </ui-select-choices>
-            </ui-select>
-        </div>
-        <div class="col-sm-12 small-vertical-spacing">
-            <ui-select ng-model="model.selectedProgram"
-                       ng-disabled="!model.selectedNDP"
-                       theme="select2"
-                       style="width:100%;">
-                <ui-select-match allow-clear="true" class="form-control-ui-select" placeholder="{{model.ndpProgram && model.ndpProgram.options && model.ndpProgram.options.length > 0 ? 'please_select_program' : 'empty'| translate}}">{{$select.selected.displayName|| $select.selected}}</ui-select-match>
-                <ui-select-choices repeat="option in model.ndpProgram.options | filter: $select.search | limitTo:maxOptionSize | orderBy: ['displayName']">
-                    <span ng-bind-html="option.displayName | highlight: $select.search"></span>
-                </ui-select-choices>
-            </ui-select>
-        </div>
+<div ng-if="!model.reportStarted && model.reportReady">
+    <div class="row">        
         <div class="col-sm-12 small-vertical-spacing">
             <input type="text" ng-model="model.filterText" class="form-control" placeholder="{{'filter_by_name_code'| translate}}">
         </div>
@@ -44,7 +23,7 @@
                 <i class="fa fa-table label-font"></i>
             </label>
             <label class="long-horizontal-spacing">
-                {{'total_no_indicators'| translate}} = {{model.dataElements.length}}
+                {{'total_no_indicators'| translate}} = {{model.totalDataElements}}
             </label>
         </span>
         <table class="table table-bordered table-responsive">
@@ -53,7 +32,7 @@
                     <th class="sticky" ng-click="sortItems(header)" >
                         {{'completeness'| translate}}
                     </th>
-                    <th class="sticky cursor-pointer" ng-click="sortItems(header)" ng-repeat="header in model.dictionaryHeaders| filter: {show: true}">
+                    <th class="sticky cursor-pointer" ng-click="sortItems(header)" ng-repeat="header in model.dictionaryHeaders | filter: {show: true}">
                         {{header.name| translate}}
                         <span class="fa-stack hideInPrint">
                             <span ng-class="{true: 'alert-danger'} [sortHeader.id === header.id && !reverse]"><i class="fa fa-sort-asc fa-stack-1x"></i></span>
@@ -63,11 +42,11 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="item in model.dataElements| orderBy:sortHeader.id:reverse | multiColumnFilter:model.filterText" ng-click="showDetails(item.id)">
+                <tr ng-repeat="item in model.dataElements| orderBy:sortHeader.id:reverse | multiColumnFilter:model.filterText" ng-click="showDetails(item)">
                     <td ng-class="item.completeness">
                         {{item.completenessRate}}
                     </td>
-                    <td class="cursor-pointer" ng-repeat="header in model.dictionaryHeaders| filter: {show: true}">
+                    <td class="cursor-pointer" ng-repeat="header in model.dictionaryHeaders | filter: {show: true}">
                         {{header.id ==='vote' && item.orgUnit? item.orgUnit : item[header.id]}}
                     </td>
                 </tr>
@@ -75,9 +54,7 @@
         </table>
     </div>
     <div class="row hideInPrint">
-        <div class="col-sm-12 small-vertical-spacing">
-            <serverside-paginator></serverside-paginator>
-        </div>        
+        <serverside-paginator></serverside-paginator>
     </div>
     <div class="vertical-spacing" ng-if="model.dataElements.length === 0">
         <div class="alert alert-warning">
@@ -86,7 +63,7 @@
     </div>
 </div>
 
-<div ng-if="!model.indicatorsFetched" class="vertical-spacing">
+<div ng-if="model.reportStarted && !model.reportReady" class="vertical-spacing">
     <img src="../images/ajax-loader-bar.gif" alt="{{'in_progress'| translate}}"/><br>
     {{'loading_metadata'| translate}}
 </div>
