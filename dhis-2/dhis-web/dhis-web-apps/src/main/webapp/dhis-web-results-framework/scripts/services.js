@@ -1386,6 +1386,8 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                         });
                                         dataElementRowIndex[de.id] = dataElementRows;
                                         angular.forEach(performanceOverviewHeaders, function (ph) {
+                                            var d = $filter('filter')(data, {pe: ph.period});
+                                            ph.hasData = d && d.length > 0;
                                             var v = pov[deg.id + '-' + ph.id + '-' + ph.period];
                                             var prcnt = CommonUtils.getPercent(v, deg.dataElements.length, true, true);
                                             povPercent[deg.id + '-' + ph.id + '-' + ph.period] = prcnt;
@@ -1417,7 +1419,8 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     selectedDataElementGroupSets: dataParams.selectedDataElementGroupSets,
                     dataElementRowIndex: dataElementRowIndex,
                     tableRows: tableRows,
-                    povTableRows: povTableRows
+                    povTableRows: povTableRows,
+                    performanceOverviewHeaders: performanceOverviewHeaders
                 };
             }
         };

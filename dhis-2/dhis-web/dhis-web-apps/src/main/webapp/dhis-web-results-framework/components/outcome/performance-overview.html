@@ -22,7 +22,8 @@
                         <th class="center sticky pov-cell-width"
                             ng-style="header.style"
                             ng-class="header.printStyle"
-                            ng-repeat="header in model.performanceOverviewHeaders">
+                            ng-repeat="header in model.performanceOverviewHeaders"
+                            ng-if="header.hasData">
                             {{header.id}}
                             <br>%
                         </th>
@@ -40,6 +41,7 @@
                             {{row.dataElementSize}}
                         </td>
                         <td ng-repeat="povh in model.performanceOverviewHeaders"
+                            ng-if="povh.hasData"
                             ng-init="povValue = row.povPercent[row.dataElementGroupId + '-' + povh.id + '-' + povh.period]">
                             {{povValue}}
                         </td>

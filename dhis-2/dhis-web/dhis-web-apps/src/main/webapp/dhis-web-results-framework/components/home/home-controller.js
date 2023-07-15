@@ -51,14 +51,14 @@ ndpFramework.controller('HomeController',
 
             $scope.model.metaDataCached = true;
 
-            /*for( var i=1; i<=12; i++ ){
+            for( var i=1; i<=12; i++ ){
                 $scope.model.slides.push({
                     id: i,
                     type: 'IMG',
                     path: 'images/NDPIII/' + i + '.jpeg',
                     style: 'background-image:url(images/NDPIII/' + i + '.jpeg)'
                 });
-            }*/
+            }
 
             NDPMenuService.getMenu('data/ndpMenuGambia.json').then(function(menu){
                 $scope.model.menuItems = [

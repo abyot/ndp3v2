@@ -42,7 +42,7 @@ ndpFramework.controller('OutcomeController',
         allPeriods: [],
         periodOffset: 0,
         openFuturePeriods: 10,
-        selectedPeriodType: 'FinancialJuly',
+        selectedPeriodType: 'Yearly',
         displayProjectOutputs: true,
         displayDepartmentOutPuts: true,
         explanations: [],
@@ -182,7 +182,7 @@ ndpFramework.controller('OutcomeController',
                                     $scope.model.allPeriods = angular.copy( periods );
                                     $scope.model.periods = periods;
                                     
-                                    var selectedPeriodNames = ['2020/21', '2021/22', '2022/23', '2023/24', '2024/25'];
+                                    var selectedPeriodNames = ['2020', '2021', '2022', '2023', '2024'];
                                     var today = DateUtils.getToday();
                                     angular.forEach($scope.model.periods, function(pe){
                                         if ( pe.startDate <= today && pe.endDate >= today ){
@@ -355,6 +355,7 @@ ndpFramework.controller('OutcomeController',
                         $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
                         $scope.model.tableRows = processedData.tableRows;
                         $scope.model.povTableRows = processedData.povTableRows;
+                        $scope.model.performanceOverviewHeaders = processedData.performanceOverviewHeaders;
                     }
                 });
             });
