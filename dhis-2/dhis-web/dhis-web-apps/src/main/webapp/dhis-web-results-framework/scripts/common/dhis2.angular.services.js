@@ -386,11 +386,23 @@ var d2Services = angular.module('d2Services', ['ngResource'])
             }
             return false;
         },
-        userHasWriteAccess: function( storage, objectId ){
+        userHasWriteAccess: function( storage, object, objectId ){
             var objs = SessionStorageService.get(storage);
             if (objs && objs.length) {
                 for (var i = 0; i < objs.length; i++) {
                     if (objs[i].id === objectId && objs[i].access && objs[i].access.data && objs[i].access.data.write) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+        userHasReadAccess: function( storage, object, objectId ){
+            var objs = SessionStorageService.get(storage);
+            objs = objs[object];
+            if (objs && objs.length) {
+                for (var i = 0; i < objs.length; i++) {
+                    if (objs[i].id === objectId && objs[i].access && objs[i].access.data && ( objs[i].access.data.read || objs[i].access.data.write ) ) {
                         return true;
                     }
                 }

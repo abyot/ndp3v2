@@ -10,6 +10,7 @@ ndpFramework.controller('ProjectController',
         NotificationService,
         SelectedMenuService,
         MetaDataFactory,
+        ProgramFactory,
         OrgUnitFactory,
         ProjectService) {
 
@@ -73,7 +74,7 @@ ndpFramework.controller('ProjectController',
 
         $scope.model.ndp = $filter('getFirst')($scope.model.optionSets, {code: 'ndp'});
 
-        MetaDataFactory.getAll('programs').then(function(programs){
+        ProgramFactory.getAll('programs').then(function(programs){
             angular.forEach(programs, function(pr){                
                 angular.forEach(pr.programTrackedEntityAttributes, function(pta){
                     $scope.model.attributesById[pta.trackedEntityAttribute.id] = pta.trackedEntityAttribute;

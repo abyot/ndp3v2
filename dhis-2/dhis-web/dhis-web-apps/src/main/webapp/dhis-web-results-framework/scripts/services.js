@@ -563,6 +563,91 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
         };
     })
 
+    /* Factory to fetch programs */
+    .factory('ProgramFactory', function($q, $rootScope, DDStorageService, CommonUtils, orderByFilter) {
+
+        return {
+            get: function(uid){
+
+                var def = $q.defer();
+
+                DDStorageService.currentStore.open().done(function(){
+                    DDStorageService.currentStore.get('programs', uid).done(function(ds){
+                        $rootScope.$apply(function(){
+                            def.resolve(ds);
+                        });
+                    });
+                });
+                return def.promise;
+            },
+            getByOu: function(ou, selectedProgram){
+                var def = $q.defer();
+
+                DDStorageService.currentStore.open().done(function(){
+                    DDStorageService.currentStore.getAll('programs').done(function(prs){
+                        var programs = [];
+                        angular.forEach(prs, function(pr){
+                            if(pr.organisationUnits.hasOwnProperty( ou.id ) && pr.id && CommonUtils.userHasReadAccess( 'ACCESSIBLE_PROGRAMS', 'programs', pr.id)){
+                                programs.push(pr);
+                            }
+                        });
+
+                        programs = orderByFilter(programs, '-displayName').reverse();
+
+                        if(programs.length === 0){
+                            selectedProgram = null;
+                        }
+                        else if(programs.length === 1){
+                            selectedProgram = programs[0];
+                        }
+                        else{
+                            if(selectedProgram){
+                                var continueLoop = true;
+                                for(var i=0; i<programs.length && continueLoop; i++){
+                                    if(programs[i].id === selectedProgram.id){
+                                        selectedProgram = programs[i];
+                                        continueLoop = false;
+                                    }
+                                }
+                                if(continueLoop){
+                                    selectedProgram = null;
+                                }
+                            }
+                        }
+
+                        if(!selectedProgram || angular.isUndefined(selectedProgram) && programs.legth > 0){
+                            selectedProgram = programs[0];
+                        }
+
+                        $rootScope.$apply(function(){
+                            def.resolve({programs: programs, selectedProgram: selectedProgram});
+                        });
+                    });
+                });
+                return def.promise;
+            },
+            getAll: function (store) {
+                var def = $q.defer();
+                DDStorageService.currentStore.open().done(function () {
+                    DDStorageService.currentStore.getAll(store).done(function (prs) {
+                        var programs = [];
+                        angular.forEach(prs, function(pr){
+                            if(pr.id && CommonUtils.userHasReadAccess( 'ACCESSIBLE_PROGRAMS', 'programs', pr.id)){
+                                programs.push(pr);
+                            }
+                        });
+                        programs = orderByFilter(programs, ['-code', '-displayName']).reverse();
+
+                        $rootScope.$apply(function () {
+                            def.resolve(programs);
+                        });
+                    });
+                });
+                return def.promise;
+            }
+        };
+    })
+
     /* factory to fetch and process programValidations */
     .factory('MetaDataFactory', function ($q, $rootScope, DDStorageService, orderByFilter) {
 
@@ -1710,7 +1795,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 tei.enrollments[0].events = orderByFilter(tei.enrollments[0].events, '-occurredAt').reverse();
                                 var len = tei.enrollments[0].events.length;
                                 var ev = tei.enrollments[0].events[len - 1];
-                                if (ev && ev.dataValues) {
+                                if (ev && ev.dataValues && CommonUtils.userHasReadAccess('ACCESSIBLE_PROGRAM_STAGES', 'programStages', ev.programStage) ) {
                                     project.status = {};
                                     angular.forEach(ev.dataValues, function (dv) {
                                         if (dataElementsById[dv.dataElement]) {
@@ -1781,7 +1866,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                 var kpi = {};
                                 var events = tei.enrollments[0].events;
                                 events = orderByFilter(events, '-eventDate');
-                                if (events[0]) {
+                                if (events[0] && CommonUtils.userHasReadAccess('ACCESSIBLE_PROGRAM_STAGES', 'programStages', events[0].programStage) ) {
                                     kpi.eventDate = DateUtils.formatFromApiToUser(events[0].eventDate);
                                     angular.forEach(events[0].dataValues, function (dv) {
                                         var de = dataElementsById[dv.dataElement];

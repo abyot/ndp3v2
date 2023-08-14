@@ -484,6 +484,12 @@ dhis2.metadata.getMetaObject = function( id, store, url, filter, storage, db, fu
             response = func(response);
         }
 
+        if ( store === 'ACCESSIBLE_PROGRAMS' ){
+            var programStages = $.map(response.programs, function(pr){ return pr.programStages; });
+            var SessionStorageService = angular.element('body').injector().get('SessionStorageService');
+            SessionStorageService.set('ACCESSIBLE_PROGRAM_STAGES', {programStages: programStages});
+        }
+
         if(storage === 'idb'){
             if( response && response.id) {
                 db.set( store, response );

@@ -9,6 +9,7 @@ ndpFramework.controller('PolicyController',
         $filter,
         SelectedMenuService,
         MetaDataFactory,
+        ProgramFactory,
         OrgUnitFactory,
         ProjectService) {
 
@@ -71,9 +72,8 @@ ndpFramework.controller('PolicyController',
 
         $scope.model.ndp = $filter('getFirst')($scope.model.optionSets, {code: 'ndp'});
 
-        MetaDataFactory.getAll('programs').then(function(programs){
+        ProgramFactory.getAll('programs').then(function(programs){
             $scope.model.programs = $filter('filter')(programs, {programType: 'WITH_REGISTRATION', programDomain: 'policyAction'}, true);
-
             $scope.model.selectedMenu = SelectedMenuService.getSelectedMenu();
 
             //Get orgunits for the logged in user

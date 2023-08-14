@@ -169,6 +169,9 @@ dhis2.ndp.downloadMetaData = function()
 
     return dhis2.ndp.store.open()
 
+        .then( getUserAccessibleDataSets )
+        .then( getUserAccessiblePrograms )
+
         //fetch data sets
         .then( getMetaDataSets )
         .then( filterMissingDataSets )
@@ -228,8 +231,8 @@ dhis2.ndp.downloadAllMetaData = function()
 
     return dhis2.ndp.store.open()
 
-
         .then( getUserAccessibleDataSets )
+        .then( getUserAccessiblePrograms )
         .then( getOrgUnitLevels )
         .then( getSystemSetting )
 
@@ -291,6 +294,10 @@ dhis2.ndp.downloadAllMetaData = function()
 
 function getUserAccessibleDataSets(){
     return dhis2.metadata.getMetaObject(null, 'ACCESSIBLE_DATASETS', dhis2.ndp.apiUrl + '/dataSets.json', 'fields=id,access[data[write]]&paging=false', 'sessionStorage', dhis2.ndp.store);
+}
+
+function getUserAccessiblePrograms(){
+    return dhis2.metadata.getMetaObject(null, 'ACCESSIBLE_PROGRAMS', dhis2.ndp.apiUrl + '/programs.json', 'fields=id,access[data[read,write]],programStages[id,access[data[read,write]]]&paging=false', 'sessionStorage', dhis2.ndp.store);
 }
 
 function getOrgUnitLevels()
