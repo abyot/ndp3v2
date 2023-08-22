@@ -346,6 +346,7 @@ ndpFramework.controller('ObjectiveController',
                         $scope.model.dataElementRowIndex = processedData.dataElementRowIndex;
                         $scope.model.tableRows = processedData.tableRows;
                         $scope.model.povTableRows = processedData.povTableRows;
+                        $scope.model.hasEmptyRows = processedData.tableRows.hasEmptyRows;
                     }
                 });
             });

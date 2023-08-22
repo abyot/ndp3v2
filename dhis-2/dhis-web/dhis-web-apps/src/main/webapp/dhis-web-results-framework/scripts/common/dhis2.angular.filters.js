@@ -100,6 +100,22 @@ var d2Filters = angular.module('d2Filters', [])
     };
 })
 
+
+.filter('emptyRowFilter', function($filter){
+    return function(data, hideEmptyRow){
+        if(!data ){
+            return;
+        }
+
+        if(!hideEmptyRow){
+            return data;
+        }
+        else{
+            return $filter('filter')(data, {hasData: hideEmptyRow});
+        }
+    };
+})
+
 .filter('paginate', function(Paginator) {
     return function(input, rowsPerPage) {
         if (!input) {

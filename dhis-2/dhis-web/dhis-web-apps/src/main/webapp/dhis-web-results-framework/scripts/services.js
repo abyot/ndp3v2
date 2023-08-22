@@ -1361,6 +1361,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                             dataElementGroup: deg.displayName,
                                             dataElementGroupSet: degs.displayName,
                                             values: {},
+                                            hasData: false,
                                             styles: {}
                                         };
                                         tableRows.push(tableRow);
@@ -1371,6 +1372,9 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                                 }
                                                 if (dh.isRowData) {
                                                     var bVal = filterBudgetData(dh, de.id, oc.id, data);
+                                                    if ( bVal !== '' ){
+                                                        tableRow.hasData = true;
+                                                    }
                                                     tableRow.values[dh.dimensionId + '.' + dh.periodId] = bVal;
                                                 }
                                                 else {
@@ -1423,6 +1427,9 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                                                     dh.hasResultData = true;
                                                 }
                                                 var val = filterResultData(dh, de.id, oc.id, data);
+                                                if ( val !== '' ){
+                                                    tableRow.hasData = true;
+                                                }
                                                 var trafficLight = "";
                                                 if (dh.dimensionId === dataParams.actualDimension.id) {
                                                     var targetValue = filterTargetData(dh, de.id, oc.id, data);

@@ -1,17 +1,7 @@
 <div ng-include="'components/goal/filters.html'"></div>
 <div class="row" ng-if="model.reportReady">
     <div class="col-sm-12" ng-if="model.dataExists">
-        <span class=" hideInPrint">
-            <span class="dropdown">
-                <label class="btn btn-default dropdown-toggle" data-toggle="dropdown" ng-attr-title="{{'download_as'| translate}}"><i class="fa fa-download"></i></label>
-                <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">{{'download_as'| translate}}</h6></li>
-                    <li class="divider"></li>
-                    <li><a href ng-click="exportData('result')">{{'csv'| translate}}</a></li>
-                    <li><a href onclick="javascript:window.print()">{{'pdf'| translate}}</a></li>
-                </ul>
-            </span>
-        </span>
+        <span ng-include="'views/results-header.html'"></span>
         <div id="result" class="table-scroll">
             <table>
                 <tr>

@@ -1,17 +1,7 @@
 <div ng-include="'components/action/filters.html'"></div>
 <div class="row" ng-if="model.reportReady">
     <div ng-if="model.dataExists">
-        <span class="col-sm-12 hideInPrint">
-            <span class="dropdown">
-                <label class="btn btn-default dropdown-toggle" data-toggle="dropdown" ng-attr-title="{{'download_as'| translate}}"><i class="fa fa-download"></i></label>
-                <ul class="dropdown-menu">
-                    <li><h6 class="dropdown-header">{{'download_as'| translate}}</h6></li>
-                    <li class="divider"></li>
-                    <li><a href ng-click="exportData('performance')">{{'csv'| translate}}</a></li>
-                    <li><a href onclick="javascript:window.print()">{{'pdf'| translate}}</a></li>
-                </ul>
-            </span>
-        </span>
+        <span ng-include="'views/results-header.html'"></span>
         <div class="col-sm-12">
             <span class="dropdown">
                 <span class="col-sm-3 bordered-div pull-right"
@@ -51,7 +41,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="row in model.tableRows">
+                    <tr ng-repeat="row in model.tableRows | emptyRowFilter:model.hideEmptyRows">
                         <td>
                             {{row.dataElementGroupSet}}
                         </td>

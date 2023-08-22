@@ -24,7 +24,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="row in model.tableRows">
+                    <tr ng-repeat="row in model.tableRows | emptyRowFilter:model.hideEmptyRows">
                         <td>
                             {{row.dataElementGroupSet}}
                         </td>
