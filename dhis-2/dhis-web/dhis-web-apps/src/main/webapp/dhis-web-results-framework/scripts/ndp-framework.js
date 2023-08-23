@@ -172,11 +172,6 @@ dhis2.ndp.downloadMetaData = function()
         .then( getUserAccessibleDataSets )
         .then( getUserAccessiblePrograms )
 
-        //fetch data sets
-        .then( getMetaDataSets )
-        .then( filterMissingDataSets )
-        .then( getDataSets )
-
         //fetch option sets
         .then( getMetaOptionSets )
         .then( filterMissingOptionSets )

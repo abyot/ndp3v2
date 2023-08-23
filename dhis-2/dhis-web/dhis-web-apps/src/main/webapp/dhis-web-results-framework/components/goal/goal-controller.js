@@ -470,7 +470,7 @@ ndpFramework.controller('GoalController',
     };
 
     $scope.getCoverage = function(numerator, denominator){
-        return CommonUtils.getPercent(numerator, denominator, false);
+        return CommonUtils.getPercent(numerator, denominator, false, true);
     };
 
     $scope.getHeaderClass = function(header){
