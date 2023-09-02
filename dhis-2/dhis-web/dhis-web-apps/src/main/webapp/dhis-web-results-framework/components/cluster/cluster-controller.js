@@ -331,6 +331,9 @@ ndpFramework.controller('ClusterController',
             resolve: {
                 dictionaryItem: function(){
                     return item;
+                },
+                fullFetched: function(){
+                    return false;
                 }
             }
         });

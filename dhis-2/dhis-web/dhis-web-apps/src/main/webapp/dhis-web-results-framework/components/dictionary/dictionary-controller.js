@@ -11,6 +11,7 @@ ndpFramework.controller('DictionaryController',
                 Paginator,
                 NotificationService,
                 SessionStorageService,
+                SelectedMenuService,
                 MetaDataFactory,
                 DictionaryService) {
 
@@ -55,9 +56,18 @@ ndpFramework.controller('DictionaryController',
     $scope.pager = {pageSize: 50, page: 1, toolBarDisplay: 5};
 
     $scope.model.horizontalMenus = [
-        {id: 'default', title: 'ndp_indicator', order: 1, view: 'components/dictionary/default.html', active: true, class: 'main-horizontal-menu'}
-        //{id: 'classification', title: 'indicator_classification', order: 2, view: 'components/dictionary/classification.html', class: 'main-horizontal-menu'}
+        {id: 'default', title: 'ndp_indicator', order: 1, view: 'components/dictionary/default.html', active: true, class: 'main-horizontal-menu'},
+        {id: 'classification', title: 'indicator_classification', order: 2, view: 'components/dictionary/classification.html', class: 'main-horizontal-menu'}
     ];
+
+    $scope.$on('MENU', function(){
+        $scope.populateMenu();
+    });
+
+    $scope.populateMenu = function(){
+        $scope.resetView();
+        $scope.model.selectedMenu = SelectedMenuService.getSelectedMenu();
+    };
 
     $scope.getDataElementGroupSetsForNdp = function(){
         $scope.model.selectedDataElementGroupSets = angular.copy( $scope.model.dataElementGroupSets );
@@ -88,14 +98,6 @@ ndpFramework.controller('DictionaryController',
             });
         });
     };
-
-    $scope.$watch('model.selectedNDP', function(){
-        $scope.model.selectedProgram = null;
-        $scope.model.selectedDataElementGroupSets = angular.copy( $scope.model.dataElementGroupSets );
-        $scope.model.selectedDataElementGroups = angular.copy( $scope.model.dataElementGroups );
-        $scope.getDataElementGroupSetsForNdp();
-        $scope.getSelectedDataElementGroups();
-    });
 
     $scope.$watch('model.selectedProgram', function(){
         $scope.model.selectedDataElementGroupSets = angular.copy( $scope.model.dataElementGroupSets );
@@ -137,7 +139,7 @@ ndpFramework.controller('DictionaryController',
                 });
             }
         }
-        $scope.getClassificationGroups();
+        //$scope.getClassificationGroups();
     });
     
     $scope.fetchIndicators = function(){
@@ -145,52 +147,11 @@ ndpFramework.controller('DictionaryController',
         $scope.model.reportStarted = true;
         $scope.model.dataElements = [];
         $scope.model.totalDataElements = 0;
-        DictionaryService.getDataElements( $scope.pager ).then(function( response ){
+        DictionaryService.getDataElements( $scope.pager, $scope.model.dictionaryHeaders, $scope.model.completeness, $scope.model.categoryCombosById, $scope.model.filterText, $scope.sortHeader ).then(function( response ){
             if ( response && response.dataElements ){
-                var dataElements = response.dataElements;                
-                angular.forEach(dataElements, function(de){
-                    var cc = $scope.model.categoryCombosById[de.categoryCombo.id];
-                    de.disaggregation = !cc || cc.isDefault ? '-' : cc.displayName;
-                    var vote = [];
-                    var periodType = [];
-
-                    for(var i=0; i<de.dataSetElements.length; i++){
-                        var ds = de.dataSetElements[i].dataSet;
-                        var pt = ds.periodType  === 'FinancialJuly' ? 'Fiscal year' : ds.periodType;
-                        if( periodType.indexOf(pt) === -1){
-                            periodType.push(pt);
-                        }
-                        if( ds.organisationUnits ){
-                            var votes = ds.organisationUnits.map(function(ou){return ou.code;});
-                            angular.forEach(votes, function(v){
-                                if(vote.indexOf(v) === -1){
-                                    vote.push(v);
-                                }
-                            });
-                        }                        
-                    }
-
-                    if( vote && vote.length > 0 ){
-                        vote = vote.sort();
-                        if ( vote.length > 10 ){
-                            de.orgUnit = vote.slice(0,5);
-                            de.orgUnit.push('...');
-                            de.orgUnit = de.orgUnit.join(', ');
-                        }
-                        de.vote = vote.join(', ');
-                    }
-
-                    if( periodType && periodType.length > 0 ){
-                        periodType = periodType.sort();
-                        de.periodType = periodType.join(', ');
-                    }
-
-                    de = $scope.getAttributeCompleteness( de );
-                    $scope.model.dataElementsById[de.id] = de;
-                    $scope.model.dataElements.push( de );
-                });
-                
-                $scope.model.totalDataElements = $scope.model.dataElements.length;
+                $scope.model.dataElementsById = response.dataElementsById;
+                $scope.model.dataElements = response.dataElements;
+                $scope.model.totalDataElements = response.totalDataElements;
             }
             if ( response.pager ){
                 response.pager.pageSize = response.pager.pageSize ? response.pager.pageSize : $scope.pager.pageSize;
@@ -235,11 +196,11 @@ ndpFramework.controller('DictionaryController',
 
                     $scope.model.ndpProgram = $filter('filter')(optionSets, {code: 'ndpIIIProgram'})[0];
                     
-                    $scope.sortHeader = {id: 'displayName', name: 'name', colSize: "col-sm-1", show: true, fetch: false};
+                    $scope.sortHeader = {id: 'displayName', name: 'name', colSize: "col-sm-1", show: true, fetch: false, direction: 'asc'};
                     $scope.model.dictionaryHeaders = [
-                        {id: 'displayName', name: 'name', colSize: "col-sm-1", show: true, fetch: false},
-                        {id: 'code', name: 'code', colSize: "col-sm-1", show: true, fetch: false},
-                        {id: 'aggregationType', name: 'aggregationType', colSize: "col-sm-1", show: true, fetch: false},
+                        {id: 'displayName', name: 'name', colSize: "col-sm-1", show: true, fetch: false, sortable: true, direction: 'asc'},
+                        {id: 'code', name: 'code', colSize: "col-sm-1", show: true, fetch: false, sortable: true},
+                        {id: 'aggregationType', name: 'aggregationType', colSize: "col-sm-1", show: true, fetch: false, direction: 'asc'},
                         {id: 'disaggregation', name: 'disaggregation', colSize: "col-sm-1", show: true, fetch: false},
                         {id: 'valueType', name: 'valueType', colSize: "col-sm-1", show: true, fetch: false},
                         {id: 'periodType', name: 'frequency', colSize: "col-sm-1", show: true, fetch: false},
@@ -252,7 +213,8 @@ ndpFramework.controller('DictionaryController',
                             $scope.model.dictionaryHeaders.push(header);
                         }
                     });
-                 
+
+                    $scope.populateMenu();
                     $scope.fetchIndicators();
                 });
             });
@@ -276,51 +238,24 @@ ndpFramework.controller('DictionaryController',
         $scope.fetchIndicators();
     };
 
-    $scope.getAttributeCompleteness = function( item ){
-        var size = 0;
-        angular.forEach($scope.model.dictionaryHeaders, function(header){
-            if( item[header.id] ){
-                size++;
-            }
-        });
-        
-        item.completenessRate = size + ' / ' + $scope.model.dictionaryHeaders.length;
-
-        var isGreen = true;
-
-        for( var i=0; i<$scope.model.completeness.green.length; i++){
-            if( !item[$scope.model.completeness.green[i]] || item[$scope.model.completeness.green[i]] === ''){
-                isGreen = false;
-                break;
-            }
-        }
-
-        if( isGreen ){
-            item.completeness = 'green-traffic-light';
-            return item;
-        }
-
-        var isYellow = true;
-        for( var i=0; i<$scope.model.completeness.yellow.length; i++){
-            if( !item[$scope.model.completeness.yellow[i]] || item[$scope.model.completeness.yellow[i]] === ''){
-                isYellow = false;
-                break;
-            }
-        }
-
-        if( isYellow ){
-            item.completeness = 'yellow-traffic-light';
-            return item;
-        }
-
-        item.completeness = 'red-traffic-light';
-        return item;
-
-    };
-    
     $scope.sortItems = function(header){
-        $scope.reverse = ($scope.sortHeader && $scope.sortHeader.id === header.id) ? !$scope.reverse : false;
-        $scope.sortHeader = header;
+        if ( $scope.sortHeader && $scope.sortHeader.id === header.id ){
+            if ( $scope.sortHeader.direction  === 'desc' ){
+                $scope.sortHeader.direction = 'asc';
+            }
+            else{
+                $scope.sortHeader.direction = 'desc';
+            }
+        }
+        else{
+            $scope.sortHeader = header;
+            $scope.sortHeader.direction = 'asc';
+        }
+        $scope.fetchIndicators();
+    };
+
+    $scope.filterIndicators = function(){
+        $scope.fetchIndicators();
     };
 
     $scope.showDetails = function( item ){
@@ -328,17 +263,16 @@ ndpFramework.controller('DictionaryController',
             templateUrl: 'components/dictionary/details-modal.html',
             controller: 'DictionaryDetailsController',
             resolve: {
-                dictionaryHeaders: function () {
-                    return $scope.model.dictionaryHeaders;
-                },
                 dictionaryItem: function(){
                     return item;
+                },
+                fullFetched: function(){
+                    return true;
                 }
             }
         });
 
-        modalInstance.result.then(function (gridColumns) {
-            $scope.model.dictionaryHeaders = gridColumns;
+        modalInstance.result.then(function () {
         });
     };
 
@@ -378,13 +312,7 @@ ndpFramework.controller('DictionaryController',
     };
 
     $scope.resetView = function( horizontalMenu ){
-        $scope.model.selectedNDP = null;
         $scope.model.selectedProgram = null;
-        $scope.model.selectedClassification = null;
-        if ( horizontalMenu && horizontalMenu.id === 'default' ){
-            $scope.model.selectedDataElementGroupSets = angular.copy( $scope.model.dataElementGroupSets );
-            $scope.model.selectedDataElementGroups = angular.copy( $scope.model.dataElementGroups );
-            $scope.getSelectedDataElementGroups();
-        }
+        $scope.model.filterText = null;
     };
 });

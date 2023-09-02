@@ -473,6 +473,9 @@ ndpFramework.controller('OutcomeController',
             resolve: {
                 dictionaryItem: function(){
                     return item;
+                },
+                fullFetched: function(){
+                    return false;
                 }
             }
         });

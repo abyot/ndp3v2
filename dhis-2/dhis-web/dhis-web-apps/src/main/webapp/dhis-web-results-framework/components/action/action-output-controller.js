@@ -615,12 +615,14 @@ ndpFramework.controller('ActionOutputController',
             resolve: {
                 dictionaryItem: function(){
                     return item;
+                },
+                fullFetched: function(){
+                    return false;
                 }
             }
         });
 
         modalInstance.result.then(function () {
-
         });
     };
 

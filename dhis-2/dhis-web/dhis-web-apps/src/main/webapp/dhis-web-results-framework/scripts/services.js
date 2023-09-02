@@ -2106,9 +2106,74 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
         };
     })
     .service('DictionaryService', function($http, DHIS2URL, CommonUtils){
+        var processDataElement = function( de, headers, completeness, categoryCombosById ){
+            var cc = categoryCombosById[de.categoryCombo.id];
+            de.disaggregation = !cc || cc.isDefault ? '-' : cc.displayName;
+            var vote = [];
+            var periodType = [];
+
+            for(var i=0; i<de.dataSetElements.length; i++){
+                var ds = de.dataSetElements[i].dataSet;
+                var pt = ds.periodType  === 'FinancialJuly' ? 'Fiscal year' : ds.periodType;
+                if( periodType.indexOf(pt) === -1){
+                    periodType.push(pt);
+                }
+                if( ds.organisationUnits ){
+                    var votes = ds.organisationUnits.map(function(ou){return ou.code;});
+                    angular.forEach(votes, function(v){
+                        if(vote.indexOf(v) === -1){
+                            vote.push(v);
+                        }
+                    });
+                }
+            }
+
+            if( vote && vote.length > 0 ){
+                vote = vote.sort();
+                if ( vote.length > 10 ){
+                    de.orgUnit = vote.slice(0,5);
+                    de.orgUnit.push('...');
+                    de.orgUnit = de.orgUnit.join(', ');
+                }
+                de.vote = vote.join(', ');
+            }
+
+            if( periodType && periodType.length > 0 ){
+                periodType = periodType.sort();
+                de.periodType = periodType.join(', ');
+            }
+
+            if ( de.dataElementGroups && de.dataElementGroups.length > 0 ){
+                de.indicatorGroups = [];
+                angular.forEach(de.dataElementGroups, function(deg){
+                    de.indicatorGroups.push( deg.displayName );
+                    if ( deg.groupSets && deg.groupSets.length > 0 ){
+                        de.indicatorGroupSets = [];
+                        angular.forEach(deg.groupSets, function(gs){
+                            de.indicatorGroupSets.push( gs.displayName );
+
+                            if ( deg.groupSets && deg.groupSets.length > 0 ){
+                                de.indicatorGroupSets = [];
+                            }
+                        });
+                    }
+                });
+            }
+            de = CommonUtils.getDictionaryCompleteness( de, headers, completeness );
+            return de;
+        };
         return {
-            getDataElements: function( pager ){
-                var url = DHIS2URL + '/dataElements.json?' + 'order=name:asc&fields=id,code,aggregationType,displayName,shortName,description,formName,valueType,optionSetValue,optionSet[id],legendSets[id],attributeValues[value,attribute[id,name,valueType,code]],categoryCombo[id,isDefault],dataElementGroups[id,displayName,attributeValues[value,attribute[code]],groupSets[id,displayName,attributeValues[value,attribute[code]]]],dataSetElements[dataSet[id,name,periodType,organisationUnits[id,code,displayName]]]';
+            getDataElements: function( pager, headers, completeness, categoryCombosById, filter, order ){
+                var params = 'fields=id,code,aggregationType,displayName,shortName,description,formName,valueType,optionSetValue,optionSet[id],legendSets[id],attributeValues[value,attribute[id,name,valueType,code]],categoryCombo[id,isDefault],dataElementGroups[id,displayName,attributeValues[value,attribute[id,name,valueType,code]],groupSets[id,displayName,attributeValues[value,attribute[id,name,valueType,code]]]],dataSetElements[dataSet[id,name,periodType,organisationUnits[id,code,displayName]]]';
+                var url = DHIS2URL + '/dataElements.json?' + params;
+
+                if ( filter ){
+                    url = DHIS2URL + '/dataElements.json?' + 'filter=identifiable:token:' + filter + '&' + params;
+                }
+
+                if ( order ) {
+                    url += '&order=' + order.name + ':' + order.direction;
+                }
                 if ( pager ){
                     var pgSize = pager.pageSize ? pager.pageSize : 50;
                     var pg = pager.page ? pager.page : 1;
@@ -2116,9 +2181,40 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                     pg = pg > 1 ? pg : 1;
                     url += '&pageSize=' + pgSize + '&page=' + pg + '&totalPages=true';
                 }
-                
+
                 url = encodeURI(url);
                 var promise = $http.get( url ).then(function(response){
+                    if ( response.data && response.data.dataElements ){
+                        var result = {
+                            dataElements: [],
+                            dataElementsById: {},
+                            totalDataElements: 0,
+                            pager: response.data.pager
+                        };
+
+                        var dataElements = response.data.dataElements;
+                        angular.forEach(dataElements, function(de){
+                            var d = processDataElement( de, headers, completeness, categoryCombosById );
+                            result.dataElementsById[de.id] = d;
+                            result.dataElements.push( d );
+                        });
+
+                        result.totalDataElements = result.dataElements.length;
+                    }
+                    return result;
+                }, function(response){
+                    CommonUtils.errorNotifier(response);
+                    return response.data;
+                });
+                return promise;
+            },
+            getDataElement: function( id, headers, completeness, categoryCombosById ){
+                var url = DHIS2URL + '/dataElements/' + id + '.json?' + 'fields=id,code,aggregationType,displayName,shortName,description,formName,valueType,optionSetValue,optionSet[id],legendSets[id],attributeValues[value,attribute[id,name,valueType,code]],categoryCombo[id,isDefault],dataElementGroups[id,displayName,attributeValues[value,attribute[id,name,valueType,code]],groupSets[id,displayName,attributeValues[value,attribute[id,name,valueType,code]]]],dataSetElements[dataSet[id,name,periodType,organisationUnits[id,code,displayName]]]';
+                url = encodeURI(url);
+                var promise = $http.get( url ).then(function(response){
+                    if ( response && response.data ){
+                        return processDataElement( response.data, headers, completeness, categoryCombosById );
+                    }
                     return response.data;
                 }, function(response){
                     CommonUtils.errorNotifier(response);

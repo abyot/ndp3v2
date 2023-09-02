@@ -810,6 +810,49 @@ var d2Services = angular.module('d2Services', ['ngResource'])
                 }
             }
             return {data: reportData, metaData: data.metaData};
+        },
+        getDictionaryCompleteness: function( item, headers, completeness ){
+            var size = 0;
+            angular.forEach(headers, function(header){
+                if( item[header.id] ){
+                    size++;
+                }
+            });
+
+            item.completenessRate = '(' + size + ' / ' + headers.length + ')';
+
+            var isGreen = true;
+
+            for( var i=0; i<completeness.green.length; i++){
+                if( !item[completeness.green[i]] || item[completeness.green[i]] === ''){
+                    isGreen = false;
+                    break;
+                }
+            }
+
+            if( isGreen ){
+                item.completeness = 'green-background';
+                item.inlineStyle = {"background-color": '#339D73 !important'};
+                return item;
+            }
+
+            var isYellow = true;
+            for( var i=0; i<completeness.yellow.length; i++){
+                if( !item[completeness.yellow[i]] || item[completeness.yellow[i]] === ''){
+                    isYellow = false;
+                    break;
+                }
+            }
+
+            if( isYellow ){
+                item.completeness = 'yellow-background';
+                item.inlineStyle = {"background-color": '#F4CD4D !important'};
+                return item;
+            }
+
+            item.completeness = 'red-background';
+            item.inlineStyle = {"background-color": '#CD615A !important'};
+            return item;
         }
     };
 })

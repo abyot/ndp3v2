@@ -439,6 +439,9 @@ ndpFramework.controller('ObjectiveController',
             resolve: {
                 dictionaryItem: function(){
                     return item;
+                },
+                fullFetched: function(){
+                    return false;
                 }
             }
         });

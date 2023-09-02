@@ -489,6 +489,9 @@ ndpFramework.controller('IntermediateOutcomeController',
             resolve: {
                 dictionaryItem: function(){
                     return item;
+                },
+                fullFetched: function(){
+                    return false;
                 }
             }
         });

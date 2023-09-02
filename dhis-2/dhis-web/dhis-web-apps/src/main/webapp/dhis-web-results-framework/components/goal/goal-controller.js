@@ -436,6 +436,9 @@ ndpFramework.controller('GoalController',
             resolve: {
                 dictionaryItem: function(){
                     return item;
+                },
+                fullFetched: function(){
+                    return false;
                 }
             }
         });
