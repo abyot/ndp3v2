@@ -37,10 +37,10 @@
             </div>
         </div>
         <div id="exportTable" class="table-scroll">
-            <table class="table table-bordered table-responsive">
+            <table>
                 <thead>
                     <tr>
-                        <th class="sticky hideInPrint">
+                        <th class="sticky">
                             {{'completeness'| translate}}
                         </th>
                         <th class="sticky cursor-pointer" ng-click="sortItems(header)" ng-repeat="header in model.dictionaryHeaders | filter: {show: true}">
@@ -54,7 +54,7 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="item in model.dataElements" ng-click="showDetails(item)">
-                        <td ng-style="item.inlineStyle" class="hideInPrint">
+                        <td ng-style="item.inlineStyle" ng-class="item.completeness">
                             {{item.completenessRate}}
                         </td>
                         <td class="cursor-pointer" ng-repeat="header in model.dictionaryHeaders | filter: {show: true}">
