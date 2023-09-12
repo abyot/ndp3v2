@@ -208,6 +208,17 @@ var d2Directives = angular.module('d2Directives', [])
     };
 })
 
+.directive('basicServersidePaginator', function factory() {
+
+    return {
+        restrict: 'E',
+        controller: function ($scope, Paginator) {
+            $scope.paginator = Paginator;
+        },
+        templateUrl: 'views/basic-serverside-pagination.html'
+    };
+})
+
 .directive('d2CustomDataEntryForm', function ($compile) {
     return{
         restrict: 'E',

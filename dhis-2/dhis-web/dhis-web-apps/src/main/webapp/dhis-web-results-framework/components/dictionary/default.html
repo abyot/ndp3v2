@@ -6,37 +6,39 @@
     <div ng-if="model.dataElements.length > 0">
         <div class="hideInPrint">
             <div class="row">
-                <div class="col-sm-6 small-vertical-spacing input-group cursor-pointer">
+                <div class="col-sm-6 input-group cursor-pointer">
                     <input type="text"
                         ng-model="model.filterText"
                         placeholder="{{'filter_by_name_code'| translate}}"
                         class="form-control">
-                    <span class="input-group-btn">
+                    <div class="input-group-btn">
                         <button class="btn btn-primary" type="button" title="{{'search'| translate}}" ng-click="filterIndicators()">
                             {{'search' | translate}}
                         </button>
-                    </span>
+                        <span class="dropdown">
+                            <label class="btn btn-default dropdown-toggle" data-toggle="dropdown" ng-attr-title="{{'download_as'| translate}}"><i class="fa fa-download"></i></label>
+                            <ul class="dropdown-menu">
+                                <li><h6 class="dropdown-header">{{'download_as'| translate}}</h6></li>
+                                <li class="divider"></li>
+                                <li><a href filename="indicator-dictionary.csv" ng-click="exportData()">{{'csv'| translate}}</a></li>
+                                <li><a href filename="indicator-dictionary.pdf" onclick="javascript:window.print()">{{'pdf'| translate}}</a></li>
+                            </ul>
+                        </span>
+                        <span>
+                            <label class="btn btn-default horizontal-spacing" ng-click="showHideColumns()" ng-attr-title="{{'show_hide_columns'| translate}}">
+                                <i class="fa fa-table label-font"></i>
+                            </label>
+                        </span>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="dropdown col-sm-12 vertical-spacing">
-                    <label class="btn btn-default dropdown-toggle" data-toggle="dropdown" ng-attr-title="{{'download_as'| translate}}"><i class="fa fa-download"></i></label>
-                    <ul class="dropdown-menu">
-                        <li><h6 class="dropdown-header">{{'download_as'| translate}}</h6></li>
-                        <li class="divider"></li>
-                        <li><a href filename="indicator-dictionary.csv" ng-click="exportData()">{{'csv'| translate}}</a></li>
-                        <li><a href filename="indicator-dictionary.pdf" onclick="javascript:window.print()">{{'pdf'| translate}}</a></li>
-                    </ul>
-                    <label class="btn btn-default horizontal-spacing" ng-click="showHideColumns()" ng-attr-title="{{'show_hide_columns'| translate}}">
-                        <i class="fa fa-table label-font"></i>
-                    </label>
+                <div class="col-sm-6">
                     <label class="long-horizontal-spacing">
                         {{'total_no_indicators'| translate}} = {{model.totalDataElements}}
                     </label>
                 </div>
             </div>
         </div>
-        <div id="exportTable" class="table-scroll">
+        <div id="exportTable" class="table-scroll small-vertical-spacing">
             <table>
                 <thead>
                     <tr>
@@ -54,10 +56,10 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="item in model.dataElements" ng-click="showDetails(item)">
-                        <td ng-style="item.inlineStyle" ng-class="item.completeness">
+                        <td title="{{'click_here_for_details'| translate}}" ng-style="item.inlineStyle" ng-class="item.completeness">
                             {{item.completenessRate}}
                         </td>
-                        <td class="cursor-pointer" ng-repeat="header in model.dictionaryHeaders | filter: {show: true}">
+                        <td title="{{'click_here_for_details'| translate}}" class="cursor-pointer" ng-repeat="header in model.dictionaryHeaders | filter: {show: true}">
                             {{header.id ==='vote' && item.orgUnit? item.orgUnit : item[header.id]}}
                         </td>
                     </tr>

@@ -1751,10 +1751,30 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
 
     .service('ProjectService', function ($http, orderByFilter, DateUtils, CommonUtils, OptionSetService) {
         return {
-            getByProgram: function (orgUnit, program, optionSets, attributesById, dataElementsById) {
-                var url = dhis2.ndp.apiUrl + '/tracker/trackedEntities.json?ouMode=DESCENDANTS&order=created:desc&fields=*&paging=false&orgUnit=' + orgUnit.id + '&program=' + program.id;
+            getByProgram: function (pager, filter, orgUnit, program, optionSets, attributesById, dataElementsById) {
+                var url = dhis2.ndp.apiUrl + '/tracker/trackedEntities.json?ouMode=DESCENDANTS&order=created:desc&fields=*&orgUnit=' + orgUnit.id + '&program=' + program.id;
+
+                if ( pager ){
+                    var pgSize = pager.pageSize ? pager.pageSize : 50;
+                    var pg = pager.page ? pager.page : 1;
+                    pgSize = pgSize > 1 ? pgSize  : 1;
+                    pg = pg > 1 ? pg : 1;
+                    url += '&pageSize=' + pgSize + '&page=' + pg + '&totalPages=false';
+                }
+
+                if ( filter ){
+                    url += "&" + filter;
+                }
+
                 var promise = $http.get(url).then(function (response) {
                     var teis = response.data && response.data.instances ? response.data.instances : [];
+                    var pager = {};
+                    if ( response.data && response.data.page && response.data.pageSize ){
+                        pager.page = response.data.page;
+                        pager.pageSize = response.data.pageSize;
+                        pager.total = 1;
+                        pager.pageCount = 1;
+                    }
                     var projects = [];
                     angular.forEach(teis, function (tei) {
                         var startDate = '', endDate = '';
@@ -1856,8 +1876,7 @@ var ndpFrameworkServices = angular.module('ndpFrameworkServices', ['ngResource']
                         }
                         projects.push(project);
                     });
-
-                    return projects;
+                    return {projects: projects, pager: pager};
                 }, function (response) {
                     CommonUtils.errorNotifier(response);
                 });

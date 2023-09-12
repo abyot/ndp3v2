@@ -393,6 +393,10 @@ html, body {
     color: #000;
 }
 
+.add-small-margin {
+    margin: 2px !important;
+}
+
 .add-small-left-padding {
     margin-left: 5px !important;
 }

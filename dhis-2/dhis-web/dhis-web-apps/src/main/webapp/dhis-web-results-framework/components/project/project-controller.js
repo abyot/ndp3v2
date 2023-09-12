@@ -7,6 +7,7 @@ ndpFramework.controller('ProjectController',
         $translate,
         $modal,
         $filter,
+        Paginator,
         NotificationService,
         SelectedMenuService,
         MetaDataFactory,
@@ -41,8 +42,13 @@ ndpFramework.controller('ProjectController',
         bac: null,
         ac: null,
         timePerformance: [],
-        costPerformance: []
+        costPerformance: [],
+        showProjectFilter: false,
+        filterText: {}
     };
+
+    //Paging
+    $scope.pager = {pageSize: 50, page: 1, toolBarDisplay: 5};
 
     $scope.model.horizontalMenus = [
         {id: 'financial_performance', title: 'financial_performance', order: 1, view: 'components/project/financial-performance.html', active: true, class: 'main-horizontal-menu'},
@@ -108,6 +114,7 @@ ndpFramework.controller('ProjectController',
 
     $scope.fetchProgramDetails = function(){
         $scope.model.selectedProgramStage = null;
+        $scope.pager = {pageSize: 50, page: 1, toolBarDisplay: 5};
         if( $scope.model.selectedMenu && $scope.model.selectedMenu.code && $scope.model.selectedProgram && $scope.model.selectedProgram.id && $scope.model.selectedProgram.programTrackedEntityAttributes ){
 
             if ( $scope.model.selectedProgram.programStages && $scope.model.selectedProgram.programStages.length > 1 ){
@@ -116,14 +123,39 @@ ndpFramework.controller('ProjectController',
             }
             
             $scope.model.selectedProgramStage = $scope.model.selectedProgram.programStages[0];
-            $scope.model.projectFetchStarted = true;
-
-            ProjectService.getByProgram($scope.selectedOrgUnit, $scope.model.selectedProgram, $scope.model.optionSetsById, $scope.model.attributesById, $scope.model.dataElementsById ).then(function( data ){
-                $scope.model.projects = data;
-                $scope.model.projectsFetched = true;
-                $scope.model.projectFetchStarted = false;
-            });
+            $scope.fetchProjects();
         }
+    };
+
+    $scope.searchProjects = function(){
+        $scope.fetchProjects();
+    };
+
+    $scope.fetchProjects = function(){
+        $scope.model.projectFetchStarted = true;
+        var filter = [];
+        if ( Object.keys( $scope.model.filterText ).length > 0 ){
+            for(var key in $scope.model.filterText ){
+                if ( $scope.model.filterText[key] && $scope.model.filterText[key] !== '' )
+                filter.push( "&filter=" + key + ':LIKE:' + $scope.model.filterText[key] );
+            }
+        }
+
+        ProjectService.getByProgram($scope.pager, filter.length > 0 ? filter.join('&') : null, $scope.selectedOrgUnit, $scope.model.selectedProgram, $scope.model.optionSetsById, $scope.model.attributesById, $scope.model.dataElementsById ).then(function( response ){
+            $scope.model.projects = response.projects;
+            $scope.model.projectsFetched = true;
+            $scope.model.projectFetchStarted = false;
+
+            response.pager.pageSize = response.pager.pageSize ? response.pager.pageSize : $scope.pager.pageSize;
+            $scope.pager = response.pager;
+            $scope.pager.toolBarDisplay = 5;
+            $scope.pager.length = $scope.model.projects.length;
+
+            Paginator.setPage($scope.pager.page);
+            Paginator.setPageCount($scope.pager.pageCount);
+            Paginator.setPageSize($scope.pager.pageSize);
+            Paginator.setItemCount($scope.pager.total);
+        });
     };
 
     $scope.getProjectDetails = function( project ){
@@ -146,6 +178,23 @@ ndpFramework.controller('ProjectController',
                 });
             }
         }
+    };
+
+    $scope.jumpToPage = function(){
+        if($scope.pager && $scope.pager.page && $scope.pager.pageCount && $scope.pager.page > $scope.pager.pageCount){
+            $scope.pager.page = $scope.pager.pageCount;
+        }
+        $scope.fetchProjects();
+    };
+
+    $scope.resetPageSize = function(){
+        $scope.pager.page = 1;
+        $scope.fetchProjects();
+    };
+
+    $scope.getPage = function(page){
+        $scope.pager.page = page;
+        $scope.fetchProjects();
     };
 
     $scope.resetData = function(){
