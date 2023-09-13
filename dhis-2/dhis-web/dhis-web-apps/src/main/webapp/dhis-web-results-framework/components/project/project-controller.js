@@ -115,6 +115,7 @@ ndpFramework.controller('ProjectController',
     $scope.fetchProgramDetails = function(){
         $scope.model.selectedProgramStage = null;
         $scope.pager = {pageSize: 50, page: 1, toolBarDisplay: 5};
+        $scope.model.filterText = {};
         if( $scope.model.selectedMenu && $scope.model.selectedMenu.code && $scope.model.selectedProgram && $scope.model.selectedProgram.id && $scope.model.selectedProgram.programTrackedEntityAttributes ){
 
             if ( $scope.model.selectedProgram.programStages && $scope.model.selectedProgram.programStages.length > 1 ){
